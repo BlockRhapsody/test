@@ -1,6 +1,7 @@
 // ============================================================
 // MetaKnow · 交互与逻辑
-// 版本：V1.0
+// 版本：V1.1
+// URL 用短 key，pageMap 映射到真实路径
 // ============================================================
 
 (function () {
@@ -131,7 +132,6 @@
             (cat) => cat.items && cat.items.length > 0
         );
 
-        // 空状态：显示引导
         if (!hasContent) {
             nav.innerHTML = `
                 <div class="sidebar-empty" style="
@@ -172,8 +172,9 @@
                 html += '</button>';
                 html += '<ul class="nav-submenu">';
                 category.items.forEach((item) => {
-                    const path = item.path || '';
-                    html += `<li><a href="#/${escapeHtml(path)}" data-path="${escapeHtml(path)}">${escapeHtml(item.title)}</a></li>`;
+                    // path 现在是短 key（如 "快速开始"）
+                    const key = item.path || '';
+                    html += `<li><a href="#${encodeURI(key)}" data-path="${escapeHtml(key)}">${escapeHtml(item.title)}</a></li>`;
                 });
                 html += '</ul></li>';
             });
@@ -181,7 +182,6 @@
             nav.innerHTML = html;
         }
 
-        // 页脚
         if (footer) {
             const version = data?.site?.version || '1.0.0';
             footer.innerHTML = `<span class="version"><i class="fas fa-code-branch"></i> v${escapeHtml(version)}</span>`;
@@ -204,13 +204,24 @@
     /* ==========================================================
        移动端侧边栏
        ========================================================== */
+    function lockScroll() {
+        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+        document.documentElement.style.setProperty('--scrollbar-width', scrollbarWidth + 'px');
+        document.body.classList.add('scroll-locked');
+    }
+
+    function unlockScroll() {
+        document.body.classList.remove('scroll-locked');
+        document.documentElement.style.removeProperty('--scrollbar-width');
+    }
+
     function openMobileSidebar() {
         state.sidebarOpen = true;
         $('#sidebar')?.classList.add('open');
         $('#mobileOverlay')?.classList.add('active');
         $('#hamburgerBtn')?.classList.add('open');
         $('#hamburgerBtn')?.setAttribute('aria-expanded', 'true');
-        document.body.style.overflow = 'hidden';
+        lockScroll();
     }
 
     function closeMobileSidebar() {
@@ -219,7 +230,7 @@
         $('#mobileOverlay')?.classList.remove('active');
         $('#hamburgerBtn')?.classList.remove('open');
         $('#hamburgerBtn')?.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
+        unlockScroll();
     }
 
     function toggleMobileSidebar() {
@@ -272,9 +283,10 @@
 
         let html = '<div class="search-results-inner">';
         results.forEach((item, i) => {
+            // item.path 是短 key
             html += `
                 <a class="search-result-item${i === state.searchIndex ? ' sel' : ''}"
-                   href="#/${escapeHtml(item.path)}"
+                   href="#${encodeURI(item.path)}"
                    data-index="${i}"
                    style="animation-delay:${i * 25}ms">
                     <div class="search-result-icon">
@@ -356,7 +368,7 @@
                 e.preventDefault();
                 const item = results[state.searchIndex];
                 if (item) {
-                    location.hash = '#/' + item.path;
+                    location.hash = '#' + encodeURI(item.path);
                     closeSearchPanel();
                     input.blur();
                 }
@@ -438,6 +450,24 @@
     }
 
     /* ==========================================================
+       Wiki 双链语法 [[页面标题]]
+       ========================================================== */
+    function resolveWikiLinks(html) {
+        const data = window.MetaKnowData;
+        if (!data?.searchIndex) return html;
+
+        return html.replace(/\[\[([^\]]+)\]\]/g, (match, title) => {
+            const name = title.trim();
+            const found = data.searchIndex.find((item) => item.title === name);
+            if (found) {
+                // found.path 是短 key，直接作为 href
+                return `<a href="#${encodeURI(found.path)}">${name}</a>`;
+            }
+            return `<span class="wiki-link-broken" title="未找到页面">${name}</span>`;
+        });
+    }
+
+    /* ==========================================================
        Giscus 评论区
        ========================================================== */
     function loadGiscus(path) {
@@ -460,7 +490,7 @@
         script.setAttribute('data-category', 'Announcements');
         script.setAttribute('data-category-id', 'DIC_kwDOUBIrTM4DGaTx');
         script.setAttribute('data-mapping', 'specific');
-        script.setAttribute('data-term', path);
+        script.setAttribute('data-term', path);   // 短 key 作为 term
         script.setAttribute('data-strict', '0');
         script.setAttribute('data-reactions-enabled', '1');
         script.setAttribute('data-emit-metadata', '0');
@@ -520,7 +550,7 @@
                         <div class="step-body">
                             <div class="step-title">注册页面</div>
                             <div class="step-desc">
-                                在 <code>data.js</code> 的 <code>navigation</code> 中加入条目
+                                在 <code>data.js</code> 的 <code>pageMap</code> 与 <code>navigation</code> 中加入条目
                             </div>
                         </div>
                     </div>
@@ -537,7 +567,6 @@
             </section>
         `;
 
-        // 首页不显示评论区
         const giscus = $('#giscus-container');
         if (giscus) giscus.innerHTML = '';
     }
@@ -596,11 +625,18 @@
             return;
         }
 
-        state.currentPath = path;
+        const data = window.MetaKnowData;
+
+        /* ⭐ 短 key → 真实路径 */
+        let realPath = path;
+        if (data?.pageMap && data.pageMap[path]) {
+            realPath = data.pageMap[path];
+        }
+
+        state.currentPath = path;   // 状态用短 key
         renderLoading();
 
-        // 从 searchIndex 中查找标题
-        const data = window.MetaKnowData;
+        // 找标题（用短 key 匹配 searchIndex）
         let pageTitle = path;
         if (data?.searchIndex) {
             const found = data.searchIndex.find((item) => item.path === path);
@@ -608,7 +644,7 @@
         }
         document.title = `${pageTitle} · ${data?.site?.title || 'MetaKnow'}`;
 
-        // 缓存检查
+        /* 缓存 key 用短 key */
         const cacheKey = 'mk_cache_' + path;
         const cacheTimeKey = cacheKey + '_time';
 
@@ -620,7 +656,8 @@
             if (cached && cacheTime && Date.now() - parseInt(cacheTime) < CACHE_MAX_AGE) {
                 content = cached;
             } else {
-                const response = await fetch(path);
+                /* ⭐ 用 realPath 去 fetch */
+                const response = await fetch(realPath);
                 if (!response.ok) {
                     if (response.status === 404) {
                         renderNotFound(path);
@@ -635,13 +672,8 @@
                 } catch {}
             }
 
-            // ============================================================
-            // 判断文件类型：
-            // - .md 文件用 marked 解析
-            // - .html 文件直接使用
-            // - 解析失败降级为原始内容
-            // ============================================================
-            const isMarkdown = path.toLowerCase().endsWith('.md');
+            /* ⭐ 用 realPath 判断文件类型 */
+            const isMarkdown = realPath.toLowerCase().endsWith('.md');
             let html;
 
             if (isMarkdown) {
@@ -664,7 +696,10 @@
                 root.style.animation = '';
             }
 
+            /* 侧边栏高亮用短 key */
             updateActiveNav(path);
+
+            /* Giscus 用短 key 作为 term */
             loadGiscus(path);
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -695,24 +730,6 @@
                 `;
             }
         }
-    }
-
-    /* ==========================================================
-       支持 [[双链]] 语法
-       ========================================================== */
-    function resolveWikiLinks(html) {
-        const data = window.MetaKnowData;
-        if (!data?.searchIndex) return html;
-
-        return html.replace(/\[\[([^\]]+)\]\]/g, (match, title) => {
-            const name = title.trim();
-            const found = data.searchIndex.find((item) => item.title === name);
-            if (found) {
-                return `<a href="#/${found.path}">${name}</a>`;
-            }
-            // 找不到就保留原文，方便排查
-            return `<span class="wiki-link-broken" title="未找到页面">${name}</span>`;
-        });
     }
 
     /* ==========================================================
@@ -781,7 +798,7 @@
 
         // 移动端点链接后关闭侧边栏
         document.addEventListener('click', (e) => {
-            const link = e.target.closest('.sidebar a[href^="#/"]');
+            const link = e.target.closest('.sidebar a[href^="#"]');
             if (link && window.innerWidth < 1024) {
                 setTimeout(closeMobileSidebar, 200);
             }
