@@ -647,6 +647,7 @@
             if (isMarkdown) {
                 html = renderMarkdown(content);
                 html = stripMarkedStyles(html);
+                html = resolveWikiLinks(html);
                 html = `<article class="article">${html}</article>`;
             } else {
                 html = content;
@@ -694,6 +695,24 @@
                 `;
             }
         }
+    }
+
+    /* ==========================================================
+       支持 [[双链]] 语法
+       ========================================================== */
+    function resolveWikiLinks(html) {
+        const data = window.MetaKnowData;
+        if (!data?.searchIndex) return html;
+
+        return html.replace(/\[\[([^\]]+)\]\]/g, (match, title) => {
+            const name = title.trim();
+            const found = data.searchIndex.find((item) => item.title === name);
+            if (found) {
+                return `<a href="#/${found.path}">${name}</a>`;
+            }
+            // 找不到就保留原文，方便排查
+            return `<span class="wiki-link-broken" title="未找到页面">${name}</span>`;
+        });
     }
 
     /* ==========================================================
