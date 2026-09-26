@@ -8,41 +8,56 @@
 
 window.MetaKnowData = {
 
-    /* ---------- 站点信息 ---------- */
     site: {
         title: 'MetaKnow',
         description: '现代知识库引擎',
         version: '1.0.0'
     },
 
-    /* ---------- 侧边栏导航 ---------- */
-    // icon 使用 FontAwesome class（不带 "fa-" 前缀的部分）
-    // 例如：'book', 'code', 'gamepad', 'flask', 'compass'
     navigation: [
-        // 示例（内容为空时自动隐藏空分类）：
-        // {
-        //     title: '开始',
-        //     icon: 'compass',
-        //     items: [
-        //         { title: '快速开始', path: 'pages/quickstart.md' },
-        //         { title: '安装指南', path: 'pages/install.md' }
-        //     ]
-        // },
+        {
+            title: '开始',
+            icon: 'rocket',
+            items: [
+                { title: '快速开始', path: 'pages/start/快速开始.md' }
+            ]
+        },
+        {
+            title: '文档',
+            icon: 'book',
+            items: [
+                { title: '编写指南', path: 'pages/docs/编写指南.md' }
+            ]
+        },
+        {
+            title: '关于',
+            icon: 'circle-info',
+            items: [
+                { title: '关于 MetaKnow', path: 'pages/about/关于MetaKnow.md' }
+            ]
+        }
     ],
 
-    /* ---------- 首页卡片 ---------- */
-    // 留空则首页显示欢迎页
     cards: [],
 
-    /* ---------- 搜索索引 ---------- */
-    // 每条记录对应一个页面，用于搜索匹配和高亮
     searchIndex: [
-        // 示例：
-        // {
-        //     title: '快速开始',
-        //     path: 'pages/quickstart.md',
-        //     category: '开始',
-        //     summary: '五分钟内搭建你的第一个知识库。'
-        // },
+        {
+            title: '快速开始',
+            path: 'pages/start/快速开始.md',
+            category: '开始',
+            summary: '五分钟内搭建你的第一个 MetaKnow 知识库。'
+        },
+        {
+            title: '编写指南',
+            path: 'pages/docs/编写指南.md',
+            category: '文档',
+            summary: 'Markdown、HTML、YAML front matter 的完整写作参考。'
+        },
+        {
+            title: '关于 MetaKnow',
+            path: 'pages/about/关于MetaKnow.md',
+            category: '关于',
+            summary: 'MetaKnow 是什么、设计哲学、技术栈、许可协议。'
+        }
     ]
 };
