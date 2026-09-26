@@ -1,6 +1,6 @@
 /* ============================================================
    MetaKnow · 样式表
-   版本：V1.0
+   版本：V1.1
    ============================================================ */
 
 /* ---------- 1. 设计令牌 ---------- */
@@ -1478,4 +1478,10 @@ button {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: 4px;
+}
+
+.article .wiki-link-broken {
+    color: var(--text-muted);
+    border-bottom: 1px dashed var(--border-strong);
+    cursor: help;
 }
