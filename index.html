@@ -86,22 +86,31 @@
     <div class="mobile-overlay" id="mobileOverlay"></div>
 
     <!-- ============================================================
-    侧边栏（桌面端 + 移动端共用同一个渲染结果）
-    ============================================================ -->
-    <aside class="sidebar" id="sidebar">
-        <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-footer" id="sidebarFooter"></div>
-    </aside>
-
-    <!-- ============================================================
-         主内容区
+         主体布局：左侧导航 | 中间正文 | 右侧目录
          ============================================================ -->
-    <main class="main-content" id="mainContent">
-        <div id="content-root">
-            <!-- 内容由 JS 动态渲染 -->
-        </div>
-        <div id="giscus-container" class="giscus-container"></div>
-    </main>
+    <div class="main-wrapper">
+
+        <!-- 侧边栏（桌面端固定 / 移动端滑出） -->
+        <aside class="sidebar" id="sidebar">
+            <nav class="sidebar-nav" id="sidebarNav"></nav>
+            <div class="sidebar-footer" id="sidebarFooter"></div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content" id="mainContent">
+            <div id="content-root">
+                <!-- 内容由 JS 动态渲染 -->
+            </div>
+            <div id="giscus-container" class="giscus-container"></div>
+        </main>
+
+        <!-- 右侧目录（仅大屏显示） -->
+        <aside class="desktop-toc" id="desktopToc">
+            <div class="toc-title">本页目录</div>
+            <nav class="toc-nav" id="tocNav"></nav>
+        </aside>
+
+    </div>
 
     <!-- ============================================================
          页脚
@@ -113,7 +122,6 @@
             <span>让知识自由流动</span>
         </p>
     </footer>
-
     <!-- ============================================================
          脚本
          ============================================================ -->
