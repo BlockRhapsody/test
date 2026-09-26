@@ -435,11 +435,20 @@
         if (typeof marked === 'undefined') {
             return '<pre>' + escapeHtml(md) + '</pre>';
         }
+
+        let body = md;
+        if (body.startsWith('---')) {
+            const end = body.indexOf('\n---', 3);
+            if (end !== -1) {
+                body = body.slice(end + 4).replace(/^\s*\n/, '');
+            }
+        }
+
         try {
-            return marked.parse(md);
+            return marked.parse(body);
         } catch (e) {
             console.warn('[MetaKnow] Markdown 解析失败:', e);
-            return '<pre>' + escapeHtml(md) + '</pre>';
+            return '<pre>' + escapeHtml(body) + '</pre>';
         }
     }
 
