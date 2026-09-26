@@ -61,35 +61,53 @@
 }
 
 /* ---------- 3. 深色主题 ---------- */
+:root,
 [data-theme="dark"] {
-    --bg-primary: #07080b;
-    --bg-secondary: #0e1015;
-    --bg-sidebar: #0b0d12;
-    --bg-navbar: rgba(11, 13, 18, 0.88);
-    --bg-input: rgba(255, 255, 255, 0.04);
-    --bg-code: rgba(255, 255, 255, 0.04);
-    --bg-hover: rgba(255, 255, 255, 0.05);
-    --bg-active: rgba(109, 140, 255, 0.12);
-    --bg-selected: rgba(109, 140, 255, 0.18);
+    /* 背景 */
+    --bg-primary: #0a0a14;
+    --bg-secondary: #12122a;
+    --bg-card: #1a1a3e;
+    --bg-sidebar: #0e0e22;
+    --bg-navbar: rgba(10, 10, 20, 0.85);
+    --bg-input: rgba(255, 255, 255, 0.05);
+    --bg-code: rgba(255, 255, 255, 0.06);
+    --bg-hover: rgba(255, 255, 255, 0.06);
+    --bg-active: rgba(76, 175, 80, 0.10);
+    --bg-selected: rgba(76, 175, 80, 0.20);
 
-    --border-color: rgba(255, 255, 255, 0.07);
+    /* 边框 */
+    --border-color: #2a2a5a;
     --border-strong: rgba(255, 255, 255, 0.15);
 
-    --text-primary: #eceef4;
-    --text-secondary: #9aa0b4;
-    --text-muted: #6b7186;
-    --text-h3: #8ba2ff;
-    --text-code: #c8cee0;
+    /* 文字 */
+    --text-primary: #ececf0;
+    --text-secondary: #9a9abe;
+    --text-muted: #6a6a8a;
+    --text-h3: #8ab4f8;
+    --text-code: #d0d0e0;
 
-    --accent: #6d8cff;
-    --accent-hover: #829dff;
-    --accent-glow: rgba(109, 140, 255, 0.25);
-    --accent-bg: rgba(109, 140, 255, 0.12);
+    /* 主题色 */
+    --accent: #4CAF50;
+    --accent-hover: #66BB6A;
+    --accent-glow: rgba(76, 175, 80, 0.25);
+    --accent-bg: rgba(76, 175, 80, 0.12);
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-card: 0 4px 20px -4px rgba(0, 0, 0, 0.5);
-    --shadow-navbar: 0 1px 3px rgba(0, 0, 0, 0.4);
-    --shadow-dropdown: 0 20px 60px -12px rgba(0, 0, 0, 0.8);
+    /* 字体与圆角 */
+    --font-pixel: 'Pixelify Sans', 'Courier New', monospace;
+    --radius: 16px;
+
+    /* 动画曲线 */
+    --transition: 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    --bounce: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    --smooth: 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    --gentle: 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --duration: 0.3s;
+    --duration-fast: 0.2s;
+    --sidebar-w: 280px;
+    --navbar-h: 64px;
 }
 
 /* ---------- 4. 重置 ---------- */
@@ -700,11 +718,14 @@ button {
 
 .nav-submenu a {
     display: block;
-    padding: 0.4rem 0.7rem;
+    padding: 0.35rem 0.6rem 0.35rem 0.9rem;
     border-radius: var(--radius-sm);
     color: var(--text-muted);
     font-size: 0.82rem;
-    transition: all var(--duration) var(--ease);
+    transition:
+        background 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+        color 0.28s ease,
+        padding-left 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
     position: relative;
     cursor: pointer;
     white-space: nowrap;
@@ -717,33 +738,40 @@ button {
     position: absolute;
     left: 0;
     top: 50%;
-    width: 3px;
-    height: 0;
+    width: 4px;
+    height: 60%;
     background: var(--accent);
     border-radius: 2px;
-    transform: translateY(-50%);
-    transition: height var(--duration) var(--ease),
-                opacity var(--duration) var(--ease);
+    transform: translateY(-50%) scaleY(0);
+    transform-origin: center;
     opacity: 0;
+    transition:
+        transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1),
+        opacity 0.25s ease,
+        box-shadow 0.35s ease;
 }
 
-.nav-submenu a:hover::before,
+.nav-submenu a:hover::before {
+    transform: translateY(-50%) scaleY(0.5);
+    opacity: 0.6;
+}
 .nav-submenu a.active::before {
-    height: 60%;
+    transform: translateY(-50%) scaleY(1);
     opacity: 1;
+    box-shadow: 0 0 10px var(--accent-glow), 0 0 20px rgba(76, 175, 80, 0.15);
 }
 
 .nav-submenu a.active {
     background: var(--bg-active);
     color: var(--accent);
     font-weight: 600;
-    padding-left: 0.95rem;
+    padding-left: 1.1rem;
 }
 
 .nav-submenu a.active::before {
-    transform: translateY(-50%) scale(1.6);
-    background: var(--accent);
-    box-shadow: 0 0 8px var(--accent-glow);
+    transform: translateY(-50%) scaleY(1);
+    opacity: 1;
+    box-shadow: 0 0 10px var(--accent-glow), 0 0 20px rgba(76, 175, 80, 0.15);
 }
 
 .sidebar-footer {
