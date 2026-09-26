@@ -2,88 +2,128 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>深圳市弘思科技有限公司</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>MetaKnow</title>
+    <meta name="description" content="MetaKnow · 现代知识库引擎" />
+    <meta name="theme-color" content="#ffffff" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="stylesheet" href="style.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+    <script>
+        // 提前应用主题，避免白屏闪烁
+        (function () {
+            var saved = localStorage.getItem('mk_theme');
+            if (saved) {
+                document.documentElement.setAttribute('data-theme', saved);
+            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
 </head>
 <body>
-
-    <!-- 导航占位 -->
-    <header id="navbar"></header>
-
-    <!-- Hero -->
-    <section class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <h1>智慧城市建设者 <br /><span>群防群治 · 义警平台</span></h1>
-                <p>专注群防群治与义警信息化建设超10年，服务全国70+地市，坚持和发展"枫桥经验"。</p>
-                <div class="hero-stats">
-                    <div><strong>70+</strong><span>服务地市</span></div>
-                    <div><strong>10年</strong><span>行业深耕</span></div>
-                    <div><strong>25项</strong><span>软件著作权</span></div>
-                </div>
-                <div style="margin-top: 30px;">
-                    <a href="/pages/products.html" class="btn-primary"><i class="fas fa-arrow-right"></i> 查看产品</a>
-                </div>
+    <!-- ============================================================
+         顶部导航栏
+         ============================================================ -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <button class="hamburger" id="hamburgerBtn" aria-label="切换侧边栏" aria-expanded="false">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <a class="nav-brand" href="#/">
+                    <span class="brand-mark">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 3 3 8l9 5 9-5-9-5Z"/>
+                            <path d="m3 16 9 5 9-5"/>
+                            <path d="m3 12 9 5 9-5"/>
+                        </svg>
+                    </span>
+                    <span class="brand-text">MetaKnow</span>
+                </a>
             </div>
-            <div class="hero-image">
-                <div class="card-grid">
-                    <div class="item"><i class="fas fa-shield-alt"></i> 义警平台</div>
-                    <div class="item"><i class="fas fa-video"></i> 智能视频</div>
-                    <div class="item"><i class="fas fa-map-marked-alt"></i> 地理信息</div>
-                    <div class="item"><i class="fas fa-database"></i> 大数据汇聚</div>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- About -->
-    <section class="about" id="about">
-        <div class="container">
-            <div class="section-title">
-                <h2>关于弘思</h2>
-                <p>立足"产学研用"发展模式，坚持自主创新</p>
-            </div>
-            <div class="about-grid">
-                <div class="about-text">
-                    <h3>互联网+的实践者 · 智慧城市建设者</h3>
-                    <p><strong>深圳市弘思科技有限公司</strong>，长期专注群防群治信息化平台和义警平台建设，坚持和发展"枫桥经验"，服务治安立体化防控体系建设，推动市域社会治理现代化。已成功案例服务70多地市。</p>
-                    <div class="highlight">
-                        <i class="fas fa-quote-left" style="color: var(--accent); margin-right: 8px;"></i>
-                        义警平台是目前全国群防群治领域和义警工作中做的最好的平台和市场占有最多的平台。
-                    </div>
+            <div class="nav-actions">
+                <!-- 搜索框 -->
+                <div class="search-wrapper" id="searchWrapper">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="搜索…" autocomplete="off"
+                           aria-label="搜索知识库" />
+                    <button class="search-clear" id="searchClear" aria-label="清空搜索">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <kbd class="search-kbd">⌘K</kbd>
                 </div>
-                <div class="about-features">
-                    <div class="feat">
-                        <i class="fas fa-microchip"></i>
-                        <h4>IT基础设施</h4>
-                        <p>物联网、弱电工程、安防监控集成服务</p>
-                    </div>
-                    <div class="feat">
-                        <i class="fas fa-robot"></i>
-                        <h4>AI算法引擎</h4>
-                        <p>人脸识别、车牌识别、图像摘要浓缩</p>
-                    </div>
-                    <div class="feat">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <h4>大数据平台</h4>
-                        <p>数据汇聚、存储、组织、服务全链路</p>
-                    </div>
-                    <div class="feat">
-                        <i class="fas fa-hand-holding-heart"></i>
-                        <h4>枫桥经验传承</h4>
-                        <p>发源地绍兴持续服务8年，获公安部肯定</p>
-                    </div>
-                </div>
+
+                <!-- 主题切换 -->
+                <button class="nav-btn" id="themeBtn" title="切换主题" aria-label="切换主题">
+                    <i class="fas fa-circle-half-stroke"></i>
+                </button>
             </div>
         </div>
-    </section>
+    </header>
 
-    <!-- 页脚占位 -->
-    <footer id="footer"></footer>
+    <!-- 搜索结果面板 -->
+    <div class="search-results" id="searchResults"></div>
 
-    <script src="script.js"></script>
+    <!-- ============================================================
+         移动端遮罩
+         ============================================================ -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- ============================================================
+         侧边栏（桌面端 + 移动端共用同一个渲染结果）
+         ============================================================ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="brand-mark small">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3 3 8l9 5 9-5-9-5Z"/>
+                    <path d="m3 16 9 5 9-5"/>
+                    <path d="m3 12 9 5 9-5"/>
+                </svg>
+            </span>
+            <span>MetaKnow</span>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNav"></nav>
+        <div class="sidebar-footer" id="sidebarFooter"></div>
+    </aside>
+
+    <!-- ============================================================
+         主内容区
+         ============================================================ -->
+    <main class="main-content" id="mainContent">
+        <div id="content-root">
+            <!-- 内容由 JS 动态渲染 -->
+        </div>
+        <div id="giscus-container" class="giscus-container"></div>
+    </main>
+
+    <!-- ============================================================
+         页脚
+         ============================================================ -->
+    <footer class="footer">
+        <p>
+            <span>MetaKnow</span>
+            <span class="dot">·</span>
+            <span>让知识自由流动</span>
+        </p>
+    </footer>
+
+    <!-- ============================================================
+         脚本
+         ============================================================ -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="data.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
