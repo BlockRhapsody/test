@@ -578,6 +578,92 @@
 
         const giscus = $('#giscus-container');
         if (giscus) giscus.innerHTML = '';
+        const toc = $('#desktopToc');
+        if (toc) toc.style.display = 'none';
+    }
+
+    /* ==========================================================
+       右侧目录
+       ========================================================== */
+    function renderToc() {
+        const tocNav = $('#tocNav');
+        const tocContainer = $('#desktopToc');
+        if (!tocNav || !tocContainer) return;
+
+        const article = document.querySelector('.article');
+        if (!article) {
+            tocNav.innerHTML = '';
+            tocContainer.style.display = 'none';
+            return;
+        }
+
+        const headings = article.querySelectorAll('h2, h3');
+        if (headings.length === 0) {
+            tocNav.innerHTML = '';
+            tocContainer.style.display = 'none';
+            return;
+        }
+
+        // 恢复显示（因为可能是从首页切回来）
+        tocContainer.style.display = '';
+
+        let html = '';
+        headings.forEach((h, i) => {
+            if (!h.id) {
+                h.id = 'heading-' + i;
+            }
+            const cls = h.tagName === 'H2' ? 'toc-h2' : 'toc-h3';
+            // h3 缩进一点
+            const indent = h.tagName === 'H3' ? 'padding-left:1.6rem;' : '';
+            html += `<a href="#${h.id}" data-target="${h.id}" class="${cls}" style="${indent}">${h.textContent}</a>`;
+        });
+        tocNav.innerHTML = html;
+
+        // 点击目录项平滑滚动
+        tocNav.querySelectorAll('a').forEach((link) => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.getElementById(link.dataset.target);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    tocNav.querySelectorAll('a').forEach((a) => a.classList.remove('active'));
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // 滚动高亮
+        setupTocScrollSpy(headings);
+    }
+
+    function setupTocScrollSpy(headings) {
+        const tocNav = $('#tocNav');
+        if (!tocNav) return;
+
+        // 断开之前的 observer（避免切页面后重复）
+        if (window.__tocObserver) {
+            window.__tocObserver.disconnect();
+        }
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.id;
+                        tocNav.querySelectorAll('a').forEach((a) => {
+                            a.classList.toggle('active', a.dataset.target === id);
+                        });
+                    }
+                });
+            },
+            {
+                rootMargin: '-80px 0px -70% 0px',
+                threshold: 0
+            }
+        );
+
+        headings.forEach((h) => observer.observe(h));
+        window.__tocObserver = observer;
     }
 
     function renderLoading() {
@@ -626,6 +712,9 @@
 
         const giscus = $('#giscus-container');
         if (giscus) giscus.innerHTML = '';
+        
+        const toc = $('#desktopToc');
+        if (toc) toc.style.display = 'none';
     }
 
     async function renderPage(path) {
@@ -636,7 +725,7 @@
 
         const data = window.MetaKnowData;
 
-        /* ⭐ 短 key → 真实路径 */
+        /* 短 key → 真实路径 */
         let realPath = path;
         if (data?.pageMap && data.pageMap[path]) {
             realPath = data.pageMap[path];
@@ -665,7 +754,7 @@
             if (cached && cacheTime && Date.now() - parseInt(cacheTime) < CACHE_MAX_AGE) {
                 content = cached;
             } else {
-                /* ⭐ 用 realPath 去 fetch */
+                /* 用 realPath 去 fetch */
                 const response = await fetch(realPath);
                 if (!response.ok) {
                     if (response.status === 404) {
@@ -712,6 +801,9 @@
             loadGiscus(path);
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            /* 生成右侧目录 */
+            renderToc();
 
         } catch (error) {
             console.error('[MetaKnow] 加载失败:', error);
