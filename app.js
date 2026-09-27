@@ -510,11 +510,15 @@
         const data = window.MetaKnowData;
         if (!data?.searchIndex) return html;
 
-        return html.replace(/\[\[([^\]]+)\]\]/g, (match, title) => {
-            const name = title.trim();
+        return html.replace(/\[\[([^\]]+)\]\]/g, (match, inner) => {
+            const name = inner.trim();
+
+            if (name.includes(':')) {
+                return match;   // 原样返回，不动
+            }
+
             const found = data.searchIndex.find((item) => item.title === name);
             if (found) {
-                // found.path 是短 key，直接作为 href
                 return `<a href="#${encodeURI(found.path)}">${name}</a>`;
             }
             return `<span class="wiki-link-broken" title="未找到页面">${name}</span>`;
