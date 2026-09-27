@@ -1789,3 +1789,276 @@ button {
 .mk-link:hover {
     border-bottom-color: var(--accent);
 }
+
+/* ---------- Tag ---------- */
+.mk-tag {
+    display: inline-block;
+    padding: 0.1rem 0.55rem;
+    border-radius: 5px;
+    font-size: 0.78em;
+    font-weight: 600;
+    background: var(--accent-bg);
+    color: var(--accent);
+    border: 1px solid var(--border-color);
+    vertical-align: middle;
+    letter-spacing: 0.01em;
+    line-height: 1.5;
+}
+
+/* ---------- Kbd ---------- */
+.mk-kbd {
+    display: inline-block;
+    padding: 0.1rem 0.45rem;
+    border-radius: 5px;
+    font-family: var(--font-mono);
+    font-size: 0.8em;
+    font-weight: 600;
+    background: var(--bg-code);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-bottom-width: 2px;
+    line-height: 1.4;
+    vertical-align: middle;
+}
+
+/* ---------- Mark ---------- */
+.mk-mark {
+    background: rgba(247, 201, 72, 0.35);
+    color: inherit;
+    padding: 0.05rem 0.25rem;
+    border-radius: 3px;
+}
+
+[data-theme="dark"] .mk-mark {
+    background: rgba(247, 201, 72, 0.25);
+}
+
+/* ---------- Card ---------- */
+.mk-card {
+    display: block;
+    padding: 1.1rem 1.3rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    text-decoration: none;
+    color: inherit;
+    transition: all var(--duration) var(--ease);
+}
+
+a.mk-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-card);
+}
+
+.mk-card .card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.mk-card .card-head i {
+    color: var(--accent);
+}
+
+.mk-card .card-body {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
+/* ---------- Grid ---------- */
+.mk-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 2), 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+@media (max-width: 640px) {
+    .mk-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- Details ---------- */
+.mk-details {
+    margin: 1.2rem 0;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-secondary);
+}
+
+.mk-details-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.8rem 1.1rem;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: background var(--duration) var(--ease);
+}
+
+.mk-details-toggle:hover {
+    background: var(--bg-hover);
+}
+
+.mk-details-toggle i {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    transition: transform var(--duration) var(--ease);
+}
+
+.mk-details.open .mk-details-toggle i {
+    transform: rotate(90deg);
+    color: var(--accent);
+}
+
+.mk-details-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s var(--ease);
+}
+
+.mk-details-inner {
+    padding: 0 1.1rem 1rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.75;
+}
+
+/* ---------- Steps ---------- */
+.mk-steps {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+    counter-reset: step;
+}
+
+.mk-step {
+    display: flex;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    position: relative;
+}
+
+.mk-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 13px;
+    top: 2.2rem;
+    bottom: -0.4rem;
+    width: 2px;
+    background: var(--border-color);
+}
+
+.mk-step-num {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent-bg);
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 2px solid var(--bg-primary);
+    z-index: 1;
+}
+
+.mk-step-content {
+    flex: 1;
+    padding-top: 0.25rem;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.75;
+}
+
+/* ---------- Tabs ---------- */
+.mk-tabs {
+    margin: 1.5rem 0;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-secondary);
+}
+
+.mk-tabs-nav {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.mk-tabs-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.mk-tab {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    position: relative;
+    transition: color var(--duration) var(--ease);
+}
+
+.mk-tab:hover {
+    color: var(--text-primary);
+}
+
+.mk-tab.active {
+    color: var(--accent);
+}
+
+.mk-tab.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: var(--accent);
+}
+
+.mk-tabs-body {
+    padding: 1rem 1.2rem;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.75;
+}
+
+.mk-tab-panel {
+    display: none;
+}
+
+.mk-tab-panel.active {
+    display: block;
+    animation: tabFade 0.3s var(--ease-out);
+}
+
+@keyframes tabFade {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+}
+
