@@ -215,16 +215,33 @@
         const lines = raw.split('\n');
         const meta = parseFenceMeta(lines[0]);
         const cols = parseInt(meta.attrs.列数 || meta.attrs.cols || '2', 10);
-
-        const cardRegex = /```card([\s\S]*?)```/g;
         const cards = [];
-        let m;
-        while ((m = cardRegex.exec(raw)) !== null) cards.push(m[1]);
 
-        const cardsHtml = cards.map((cardRaw) => {
-            const cardLines = cardRaw.trim().split('\n');
-            const cardMeta = parseFenceMeta(cardLines[0] || '');
-            const body = cardLines.slice(1).join('\n').trim();
+        // 方案 A：新语法 ==card
+        const newSyntax = raw.split(/^==card\s+/m).slice(1);
+        if (newSyntax.length > 0) {
+            newSyntax.forEach((block) => {
+                const blockLines = block.split('\n');
+                const firstLine = blockLines[0] || '';
+                const rest = blockLines.slice(1).join('\n').trim();
+                cards.push({ metaLine: firstLine, body: rest });
+            });
+        }
+
+        // 方案 B：兜底旧语法 ```card（以防用户写老格式）
+        if (cards.length === 0) {
+            const cardRegex = /```card([\s\S]*?)```/g;
+            let m;
+            while ((m = cardRegex.exec(raw)) !== null) {
+                const blockLines = m[1].trim().split('\n');
+                const firstLine = blockLines[0] || '';
+                const rest = blockLines.slice(1).join('\n').trim();
+                cards.push({ metaLine: firstLine, body: rest });
+            }
+        }
+
+        const cardsHtml = cards.map(({ metaLine, body }) => {
+            const cardMeta = parseFenceMeta(metaLine);
             const title = cardMeta.attrs.标题 || cardMeta.attrs.title || '';
             const icon = cardMeta.attrs.图标 || cardMeta.attrs.icon || '';
             const href = cardMeta.attrs.链接 || cardMeta.attrs.href || '';
