@@ -50,25 +50,19 @@ window.MetaKnowData = {
         {
             title: '开始',
             icon: 'rocket',
-            items: [
-                { title: '快速开始', path: '快速开始' }
-            ]
+            items: ['快速开始']
         },
         {
             title: '文档',
             icon: 'book',
-            items: [
-                { title: '编写指南', path: '编写指南' }
-            ]
+            items: ['编写指南', '测试']
         },
         {
             title: '关于',
             icon: 'circle-info',
-            items: [
-                { title: '关于 MetaKnow', path: '关于 MetaKnow' }
-            ]
+            items: ['关于 MetaKnow']
         }
-    ],
+    ]
 
     /* ---------- 首页卡片 ---------- */
     cards: [],
