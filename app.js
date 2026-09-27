@@ -238,6 +238,37 @@
     }
 
     /* ==========================================================
+       桌面端侧边栏展开/收起
+       ========================================================== */
+    const DESKTOP_SIDEBAR_KEY = 'mk_desktop_sidebar';
+
+    function getDesktopSidebarOpen() {
+        try {
+            const saved = localStorage.getItem(DESKTOP_SIDEBAR_KEY);
+            if (saved !== null) return saved === '1';
+        } catch {}
+        return true; // 默认展开
+    }
+
+    function setDesktopSidebar(open) {
+        const sidebar = $('#sidebar');
+        const wrapper = $('#mainWrapper');
+        if (!sidebar || !wrapper) return;
+
+        sidebar.classList.toggle('collapsed', !open);
+        wrapper.classList.toggle('sidebar-collapsed', !open);
+
+        try {
+            localStorage.setItem(DESKTOP_SIDEBAR_KEY, open ? '1' : '0');
+        } catch {}
+    }
+
+    function toggleDesktopSidebar() {
+        const isOpen = !$('#sidebar')?.classList.contains('collapsed');
+        setDesktopSidebar(!isOpen);
+    }
+
+    /* ==========================================================
        搜索
        ========================================================== */
     function performSearch(query) {
@@ -885,8 +916,21 @@
         renderSidebar();
         restoreSidebarState();
 
+        // 桌面端侧边栏初始状态
+        if (window.innerWidth >= 1024) {
+            setDesktopSidebar(getDesktopSidebarOpen());
+        }
+
         // 事件绑定
-        $('#hamburgerBtn')?.addEventListener('click', toggleMobileSidebar);
+        $('#hamburgerBtn')?.addEventListener('click', () => {
+            // 桌面端：切换侧边栏展开/收起
+            if (window.innerWidth >= 1024) {
+                toggleDesktopSidebar();
+            } else {
+                // 移动端：保持原逻辑
+                toggleMobileSidebar();
+            }
+        });
         $('#mobileOverlay')?.addEventListener('click', closeMobileSidebar);
         $('#themeBtn')?.addEventListener('click', toggleTheme);
 
@@ -911,6 +955,13 @@
             const w = window.innerWidth;
             if (lastWidth < 1024 && w >= 1024) {
                 closeMobileSidebar();
+                // 从移动端切到桌面端：恢复桌面端记忆的状态
+                setDesktopSidebar(getDesktopSidebarOpen());
+            }
+            if (lastWidth >= 1024 && w < 1024) {
+                // 从桌面端切到移动端：清除桌面端的收起状态
+                $('#sidebar')?.classList.remove('collapsed');
+                $('#mainWrapper')?.classList.remove('sidebar-collapsed');
             }
             lastWidth = w;
         }, { passive: true });
