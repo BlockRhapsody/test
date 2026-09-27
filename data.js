@@ -40,8 +40,9 @@ window.MetaKnowData = {
        key 就是页面标题（navigation 和 searchIndex 里的 title）
     ------------------------------------------------ */
     pageMap: {
-        '快速开始':       'pages/start/快速开始.md',
-        '编写指南':       'pages/docs/编写指南.md',
+        '快速开始': 'pages/start/快速开始.md',
+        '编写指南': 'pages/docs/编写指南.md',
+        '测试': 'pages/docs/test.md',
         '关于 MetaKnow': 'pages/about/关于MetaKnow.md'
     },
 
