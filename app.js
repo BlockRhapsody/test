@@ -26,6 +26,21 @@
             .replace(/'/g, '&#39;');
     }
 
+    /* ==========================================================
+       规范化 navigation item
+       字符串 '快速开始' → { title: '快速开始', path: '快速开始' }
+       对象也兼容，path 缺省时用 title
+       ========================================================== */
+    function normalizeItem(item) {
+        if (typeof item === 'string') {
+            return { title: item, path: item };
+        }
+        return {
+            title: item.title || item.path || '',
+            path: item.path || item.title || ''
+        };
+    }
+
     function highlight(text, query) {
         if (!query) return escapeHtml(text);
         const escaped = escapeHtml(text);
