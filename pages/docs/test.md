@@ -34,12 +34,11 @@ title: 组件测试
 ```
 
 ```grid 列数=2
-```card 标题=快速开始 图标=rocket
+==card 标题=快速开始 图标=rocket
 五分钟搭起你的第一个知识库。
-```
-```card 标题=编写指南 图标=book 颜色=green
+
+==card 标题=编写指南 图标=book 颜色=green
 完整写作参考。
-```
 ```
 
 ```details 标题=点击展开详情
