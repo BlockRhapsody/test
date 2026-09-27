@@ -133,13 +133,13 @@
         return null;
     }
 
-    /* 把 resolveColor 的结果转成 inline style 字符串 */
-    function colorToStyle(c, opts = {}) {
+    /* 把 resolveColor 的结果转成 CSS 变量形式 */
+    function colorToStyle(c, prefix = '--callout') {
         if (!c) return '';
         const parts = [];
-        if (opts.color !== false && c.color) parts.push(`color:${c.color}`);
-        if (opts.bg !== false && c.bg) parts.push(`background:${c.bg}`);
-        if (opts.border !== false && c.border) parts.push(`border-color:${c.border}`);
+        if (c.color) parts.push(`${prefix}-color:${c.color}`);
+        if (c.bg) parts.push(`${prefix}-bg:${c.bg}`);
+        if (c.border) parts.push(`${prefix}-border:${c.border}`);
         return parts.join(';');
     }
 
