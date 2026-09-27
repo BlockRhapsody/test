@@ -917,12 +917,6 @@
         const path = parseHash();
         if (path === state.currentPath) return;
         renderPage(path);
-        if (window.MetaKnowComponents && window.MetaKnowComponents.render) {
-            console.log('[MetaKnow] 调用组件渲染');
-            window.MetaKnowComponents.render(root);
-        } else {
-            console.warn('[MetaKnow] MetaKnowComponents 未加载');
-        }
     }
 
     /* ==========================================================
