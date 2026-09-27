@@ -13,6 +13,29 @@ window.MetaKnowData = {
         version: '1.0.0'
     },
 
+    /* ---------- 颜色预设 ---------- */
+    /* 用户在 Markdown 里可以写 [[标签:文字|green]]，也可以写 |#4CAF50，也可以写 |accent */
+    colors: {
+        // 常用色名
+        green:  '#4CAF50',
+        blue:   '#4a9eff',
+        red:    '#ff6b6b',
+        orange: '#ffb347',
+        yellow: '#f7c948',
+        purple: '#ab47bc',
+        cyan:   '#26c6da',
+        pink:   '#ff6ec7',
+        gray:   '#8a8a9e',
+        grey:   '#8a8a9e',
+        // 语义别名（可改）
+        success: '#4CAF50',
+        warning: '#ffb347',
+        danger:  '#ff6b6b',
+        info:    '#4a9eff',
+        note:    '#8a8a9e',
+        tip:     '#f7c948'
+    },
+
     /* ---------- 短 key → 真实文件路径 ----------
        key 就是页面标题（navigation 和 searchIndex 里的 title）
     ------------------------------------------------ */
