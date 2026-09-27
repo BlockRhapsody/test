@@ -1,6 +1,6 @@
 /* ============================================================
    MetaKnow · 样式表
-   版本：V1.1
+   版本：V1.2
    ============================================================ */
 
 /* ---------- 1. 设计令牌 ---------- */
@@ -1685,13 +1685,15 @@ button {
 
 /* ---------- Callout ---------- */
 .callout {
+    --callout-color: var(--border-strong);
+    --callout-bg: var(--bg-code);
     display: flex;
     gap: 0.9rem;
     padding: 1rem 1.1rem;
     margin: 1.5rem 0;
     border-radius: var(--radius);
-    border-left: 4px solid var(--callout-color, var(--border-strong));
-    background: var(--callout-bg, var(--bg-code));
+    border-left: 4px solid var(--callout-color);
+    background: var(--callout-bg);
     transition: transform var(--duration) var(--ease);
 }
 
