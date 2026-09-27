@@ -186,10 +186,9 @@
                 html += '<i class="fas fa-chevron-right cat-arrow"></i>';
                 html += '</button>';
                 html += '<ul class="nav-submenu">';
-                category.items.forEach((item) => {
-                    // path 现在是短 key（如 "快速开始"）
-                    const key = item.path || '';
-                    html += `<li><a href="#${encodeURI(key)}" data-path="${escapeHtml(key)}">${escapeHtml(item.title)}</a></li>`;
+                category.items.forEach((rawItem) => {
+                    const item = normalizeItem(rawItem);
+                    html += `<li><a href="#${encodeURI(item.path)}" data-path="${escapeHtml(item.path)}">${escapeHtml(item.title)}</a></li>`;
                 });
                 html += '</ul></li>';
             });
