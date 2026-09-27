@@ -447,12 +447,17 @@
                             return '<i class="fas fa-' + escapeHtml(content) + ' mk-icon"' +
                                 (style4 ? ' style="' + style4 + '"' : '') + '></i>';
                         }
-                        case '链接':
-                        case 'link':
-                            return '<a class="mk-link" href="' + escapeHtml(param) + '">' +
-                                escapeHtml(content) + '</a>';
-                        default:
-                            return match;
+                      case '链接':
+                      case 'link':
+                          return '<a class="mk-link" href="' + escapeHtml(param) + '">' +
+                              escapeHtml(content) + '</a>';
+                      case '外链':
+                      case 'external':
+                      case 'newtab':
+                          return '<a class="mk-link mk-link-external" href="' + escapeHtml(param) +
+                              '" target="_blank" rel="noopener noreferrer">' +
+                              escapeHtml(content) +
+                              ' <i class="fas fa-arrow-up-right-from-square"></i></a>';
                     }
                 }
             );
