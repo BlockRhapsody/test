@@ -63,7 +63,7 @@ window.MetaKnowData = {
             icon: 'circle-info',
             items: ['关于 MetaKnow']
         }
-    ]
+    ],
 
     /* ---------- 首页卡片 ---------- */
     cards: [],
