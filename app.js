@@ -489,12 +489,28 @@
             }
         }
 
+        // 保护所有 [[...]] 内的内容，避免 marked 把 URL 变成 <a>
+        const placeholders = [];
+        body = body.replace(/\[\[[^\]]+\]\]/g, (match) => {
+            const idx = placeholders.length;
+            placeholders.push(match);
+            return `\u0000WIKILINK${idx}\u0000`;
+        });
+
+        let html;
         try {
-            return marked.parse(body);
+            html = marked.parse(body);
         } catch (e) {
             console.warn('[MetaKnow] Markdown 解析失败:', e);
             return '<pre>' + escapeHtml(body) + '</pre>';
         }
+
+        // 还原占位符
+        html = html.replace(/\u0000WIKILINK(\d+)\u0000/g, (m, i) => {
+            return placeholders[+i] || m;
+        });
+
+        return html;
     }
 
     function stripMarkedStyles(html) {
