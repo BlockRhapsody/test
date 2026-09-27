@@ -527,15 +527,26 @@
         if (!data?.searchIndex) return html;
 
         return html.replace(/\[\[([^\]]+)\]\]/g, (match, inner) => {
-            const name = inner.trim();
+            let name = inner.trim();
+            if (name.includes(':')) return match;
 
-            if (name.includes(':')) {
-                return match;   // 原样返回，不动
+            // 检查是否是"新窗口"语法
+            let newTab = false;
+            if (name.endsWith('!')) {
+                newTab = true;
+                name = name.slice(0, -1).trim();
+            } else if (name.endsWith('|new')) {
+                newTab = true;
+                name = name.slice(0, -4).trim();
             }
 
             const found = data.searchIndex.find((item) => item.title === name);
             if (found) {
-                return `<a href="#${encodeURI(found.path)}">${name}</a>`;
+                const href = `#${encodeURI(found.path)}`;
+                if (newTab) {
+                    return `<a href="${href}" target="_blank" rel="noopener noreferrer">${name}</a>`;
+                }
+                return `<a href="${href}">${name}</a>`;
             }
             return `<span class="wiki-link-broken" title="未找到页面">${name}</span>`;
         });
