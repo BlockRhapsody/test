@@ -24,7 +24,7 @@
     --duration: 0.3s;
     --duration-slow: 0.5s;
 
-    --sidebar-w: 260px;
+    --sidebar-w: 240px;
     --navbar-h: 60px;
 }
 
@@ -604,11 +604,15 @@ button {
     transition: transform 0.4s var(--ease),
                 background var(--duration) var(--ease),
                 border-color var(--duration) var(--ease);
-    will-change: transform;
 }
 
 .sidebar.open {
     transform: translateX(0);
+}
+
+.sidebar.collapsed {
+    /* 桌面端收起状态 */
+    transform: translateX(-100%);
 }
 
 .sidebar-header {
@@ -1472,31 +1476,52 @@ button {
 
 /* ---------- 18. 响应式 ---------- */
 @media (min-width: 1024px) {
+    /* 桌面端：贴边通栏 */
     .sidebar {
-        position: sticky;
-        top: calc(var(--navbar-h) + 1.5rem);
-        left: auto;
-        bottom: auto;
-
-        /* 固定视口高度 */
-        height: calc(100vh - var(--navbar-h) - 3rem);
-        max-height: calc(100vh - var(--navbar-h) - 3rem);
-
+        position: fixed;
+        top: var(--navbar-h);
+        left: 0;
+        bottom: 0;
         width: var(--sidebar-w);
+        height: auto;
+        max-height: none;
+        margin-top: 0;
         transform: none;
-        margin-top: 1.5rem;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
+        border: none;
+        border-right: 1px solid var(--border-color);
+        border-radius: 0;
+        box-shadow: none;
         flex-shrink: 0;
         overflow-y: auto;
-
-        /* 内部 flex 排列，让 footer 贴底 */
         display: flex;
         flex-direction: column;
+        z-index: 95;
     }
 
-    .hamburger { display: none; }
-    .mobile-overlay { display: none; }
+    /* 桌面端收起状态：滑出左侧 */
+    .sidebar.collapsed {
+        transform: translateX(-100%);
+    }
+
+    /* 主内容：给侧边栏让出空间 */
+    .main-wrapper {
+        padding-left: calc(var(--sidebar-w) + 1.5rem);
+        padding-right: 1.5rem;
+        transition: padding-left 0.4s var(--ease);
+    }
+
+    .main-wrapper.sidebar-collapsed {
+        padding-left: 1.5rem;
+    }
+
+    /* 桌面端汉堡按钮也要显示 */
+    .hamburger {
+        display: flex;
+    }
+
+    .mobile-overlay {
+        display: none;
+    }
 }
 
 @media (max-width: 1023px) {
@@ -1529,6 +1554,25 @@ button {
 
     .main-content {
         padding: 1.5rem 1.2rem 3rem;
+    }
+
+    .nav-category-toggle {
+        font-size: 1rem;
+        padding: 0.7rem 0.8rem;
+    }
+
+    .nav-category-toggle .cat-icon {
+        font-size: 1rem;
+        width: 1.4rem;
+    }
+
+    .nav-submenu a {
+        font-size: 0.95rem;
+        padding: 0.5rem 0.7rem 0.5rem 1rem;
+    }
+
+    .sidebar-nav {
+        padding: 1rem 0.8rem 1.2rem;
     }
 }
 
