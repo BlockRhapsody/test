@@ -1,18 +1,16 @@
 // ============================================================
 // MetaKnow · 交互与逻辑
-// 版本：V1.1
-// URL 用短 key，pageMap 映射到真实路径
+// 版本：V2.0
+// 更新：优先 data.js，兜底 data-index.json
 // ============================================================
 
 (function () {
     'use strict';
 
-    /* ==========================================================
-       常量与工具
-       ========================================================== */
     const THEME_KEY = 'mk_theme';
     const SIDEBAR_KEY = 'mk_sidebar_state';
-    const CACHE_MAX_AGE = 5 * 60 * 1000; // 5 分钟
+    const DESKTOP_SIDEBAR_KEY = 'mk_desktop_sidebar';
+    const CACHE_MAX_AGE = 5 * 60 * 1000;
 
     const $ = (sel, root = document) => root.querySelector(sel);
     const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -26,11 +24,43 @@
             .replace(/'/g, '&#39;');
     }
 
+    function prefersReducedMotion() {
+        return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+
     /* ==========================================================
-       规范化 navigation item
-       字符串 '快速开始' → { title: '快速开始', path: '快速开始' }
-       对象也兼容，path 缺省时用 title
+       索引加载
        ========================================================== */
+    let INDEX_CACHE = null;
+
+    async function getIndex() {
+        if (INDEX_CACHE) return INDEX_CACHE;
+
+        const manual = window.MetaKnowData || {};
+        const hasManualNav = Array.isArray(manual.navigation) && manual.navigation.length > 0;
+        const hasManualSearch = Array.isArray(manual.searchIndex) && manual.searchIndex.length > 0;
+
+        let auto = null;
+        if (!hasManualNav || !hasManualSearch) {
+            try {
+                const res = await fetch('data-index.json?t=' + Date.now());
+                if (res.ok) auto = await res.json();
+            } catch (e) {
+                // data-index.json 不存在时正常降级
+            }
+        }
+
+        INDEX_CACHE = {
+            site: manual.site || { title: 'MetaKnow', description: '现代知识库引擎' },
+            colors: manual.colors || {},
+            navigation: hasManualNav ? manual.navigation : ((auto && auto.navigation) || []),
+            searchIndex: hasManualSearch ? manual.searchIndex : ((auto && auto.searchIndex) || []),
+            pageMap: manual.pageMap || ((auto && auto.pageMap) || {})
+        };
+
+        return INDEX_CACHE;
+    }
+
     function normalizeItem(item) {
         if (typeof item === 'string') {
             return { title: item, path: item };
@@ -45,12 +75,8 @@
         if (!query) return escapeHtml(text);
         const escaped = escapeHtml(text);
         const q = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const re = new RegExp(`(${q})`, 'gi');
+        const re = new RegExp('(' + q + ')', 'gi');
         return escaped.replace(re, '<mark>$1</mark>');
-    }
-
-    function prefersReducedMotion() {
-        return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     }
 
     /* ==========================================================
@@ -65,23 +91,19 @@
     };
 
     /* ==========================================================
-       主题管理
+       主题
        ========================================================== */
     function getStoredTheme() {
         try {
             const saved = localStorage.getItem(THEME_KEY);
             if (saved === 'light' || saved === 'dark') return saved;
-        } catch {}
-        return window.matchMedia('(prefers-color-scheme: dark)').matches
-            ? 'dark'
-            : 'light';
+        } catch (e) {}
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
 
     function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
-        try {
-            localStorage.setItem(THEME_KEY, theme);
-        } catch {}
+        try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
     }
 
     function toggleTheme() {
@@ -108,12 +130,10 @@
     function saveSidebarState() {
         const open = [];
         $$('.nav-category-toggle.open').forEach((toggle) => {
-            const title = toggle.querySelector('.cat-title')?.textContent?.trim();
-            if (title) open.push(title);
+            const title = toggle.querySelector('.cat-title');
+            if (title && title.textContent) open.push(title.textContent.trim());
         });
-        try {
-            sessionStorage.setItem(SIDEBAR_KEY, JSON.stringify(open));
-        } catch {}
+        try { sessionStorage.setItem(SIDEBAR_KEY, JSON.stringify(open)); } catch (e) {}
     }
 
     function restoreSidebarState() {
@@ -121,12 +141,13 @@
         try {
             const raw = sessionStorage.getItem(SIDEBAR_KEY);
             if (raw) open = JSON.parse(raw);
-        } catch {}
+        } catch (e) {}
 
         $$('.nav-category-toggle').forEach((toggle) => {
-            const title = toggle.querySelector('.cat-title')?.textContent?.trim();
+            const titleEl = toggle.querySelector('.cat-title');
+            const title = titleEl ? titleEl.textContent.trim() : '';
             const submenu = toggle.nextElementSibling;
-            if (open.includes(title)) {
+            if (open.indexOf(title) !== -1) {
                 toggle.classList.add('open');
                 if (submenu) submenu.classList.add('open');
             }
@@ -136,44 +157,21 @@
     /* ==========================================================
        侧边栏渲染
        ========================================================== */
-    function renderSidebar() {
-        const data = window.MetaKnowData;
+    async function renderSidebar() {
+        const data = await getIndex();
         const nav = $('#sidebarNav');
         const footer = $('#sidebarFooter');
         if (!nav) return;
 
-        const navigation = data?.navigation || [];
-        const hasContent = navigation.some(
-            (cat) => cat.items && cat.items.length > 0
-        );
+        const navigation = data.navigation || [];
+        const hasContent = navigation.some((cat) => cat.items && cat.items.length > 0);
 
         if (!hasContent) {
-            nav.innerHTML = `
-                <div class="sidebar-empty" style="
-                    padding: 2rem 1rem;
-                    text-align: center;
-                    color: var(--text-muted);
-                    font-size: 0.82rem;
-                    line-height: 1.7;
-                ">
-                    <i class="fas fa-folder-open" style="
-                        display: block;
-                        font-size: 1.6rem;
-                        margin-bottom: 0.8rem;
-                        opacity: 0.5;
-                    "></i>
-                    <p>还没有内容</p>
-                    <p style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.3rem;">
-                        在 <code style="
-                            font-family: var(--font-mono);
-                            font-size: 0.72rem;
-                            padding: 0.1rem 0.35rem;
-                            background: var(--bg-code);
-                            border-radius: 4px;
-                        ">data.js</code> 中注册页面
-                    </p>
-                </div>
-            `;
+            nav.innerHTML = '<div style="padding:2rem 1rem;text-align:center;color:var(--text-muted);font-size:0.82rem;line-height:1.7;">' +
+                '<i class="fas fa-folder-open" style="display:block;font-size:1.6rem;margin-bottom:0.8rem;opacity:0.5;"></i>' +
+                '<p>还没有内容</p>' +
+                '<p style="font-size:0.75rem;opacity:0.7;margin-top:0.3rem;">在 pages/ 目录下新建 .md 文件</p>' +
+                '</div>';
         } else {
             let html = '<ul>';
             navigation.forEach((category) => {
@@ -181,14 +179,14 @@
 
                 html += '<li class="nav-category">';
                 html += '<button class="nav-category-toggle" type="button">';
-                html += `<i class="fas fa-${category.icon || 'folder'} cat-icon"></i>`;
-                html += `<span class="cat-title">${escapeHtml(category.title)}</span>`;
+                html += '<i class="fas fa-' + (category.icon || 'folder') + ' cat-icon"></i>';
+                html += '<span class="cat-title">' + escapeHtml(category.title) + '</span>';
                 html += '<i class="fas fa-chevron-right cat-arrow"></i>';
                 html += '</button>';
                 html += '<ul class="nav-submenu">';
                 category.items.forEach((rawItem) => {
                     const item = normalizeItem(rawItem);
-                    html += `<li><a href="#${encodeURI(item.path)}" data-path="${escapeHtml(item.path)}">${escapeHtml(item.title)}</a></li>`;
+                    html += '<li><a href="#' + encodeURI(item.path) + '" data-path="' + escapeHtml(item.path) + '">' + escapeHtml(item.title) + '</a></li>';
                 });
                 html += '</ul></li>';
             });
@@ -197,11 +195,12 @@
         }
 
         if (footer) {
-            const version = data?.site?.version || '1.0.0';
-            footer.innerHTML = `<span class="version"><i class="fas fa-code-branch"></i> v${escapeHtml(version)}</span>`;
+            const version = (data.site && data.site.version) || '1.0.0';
+            footer.innerHTML = '<span class="version"><i class="fas fa-code-branch"></i> v' + escapeHtml(version) + '</span>';
         }
 
         bindSidebarEvents();
+        restoreSidebarState();
     }
 
     function bindSidebarEvents() {
@@ -231,37 +230,46 @@
 
     function openMobileSidebar() {
         state.sidebarOpen = true;
-        $('#sidebar')?.classList.add('open');
-        $('#mobileOverlay')?.classList.add('active');
-        $('#hamburgerBtn')?.classList.add('open');
-        $('#hamburgerBtn')?.setAttribute('aria-expanded', 'true');
+        const sb = $('#sidebar');
+        const ov = $('#mobileOverlay');
+        const hb = $('#hamburgerBtn');
+        if (sb) sb.classList.add('open');
+        if (ov) ov.classList.add('active');
+        if (hb) {
+            hb.classList.add('open');
+            hb.setAttribute('aria-expanded', 'true');
+        }
         lockScroll();
     }
 
     function closeMobileSidebar() {
         state.sidebarOpen = false;
-        $('#sidebar')?.classList.remove('open');
-        $('#mobileOverlay')?.classList.remove('active');
-        $('#hamburgerBtn')?.classList.remove('open');
-        $('#hamburgerBtn')?.setAttribute('aria-expanded', 'false');
+        const sb = $('#sidebar');
+        const ov = $('#mobileOverlay');
+        const hb = $('#hamburgerBtn');
+        if (sb) sb.classList.remove('open');
+        if (ov) ov.classList.remove('active');
+        if (hb) {
+            hb.classList.remove('open');
+            hb.setAttribute('aria-expanded', 'false');
+        }
         unlockScroll();
     }
 
     function toggleMobileSidebar() {
-        state.sidebarOpen ? closeMobileSidebar() : openMobileSidebar();
+        if (state.sidebarOpen) closeMobileSidebar();
+        else openMobileSidebar();
     }
 
     /* ==========================================================
-       桌面端侧边栏展开/收起
+       桌面端侧边栏
        ========================================================== */
-    const DESKTOP_SIDEBAR_KEY = 'mk_desktop_sidebar';
-
     function getDesktopSidebarOpen() {
         try {
             const saved = localStorage.getItem(DESKTOP_SIDEBAR_KEY);
             if (saved !== null) return saved === '1';
-        } catch {}
-        return true; // 默认展开
+        } catch (e) {}
+        return true;
     }
 
     function setDesktopSidebar(open) {
@@ -272,22 +280,21 @@
         sidebar.classList.toggle('collapsed', !open);
         wrapper.classList.toggle('sidebar-collapsed', !open);
 
-        try {
-            localStorage.setItem(DESKTOP_SIDEBAR_KEY, open ? '1' : '0');
-        } catch {}
+        try { localStorage.setItem(DESKTOP_SIDEBAR_KEY, open ? '1' : '0'); } catch (e) {}
     }
 
     function toggleDesktopSidebar() {
-        const isOpen = !$('#sidebar')?.classList.contains('collapsed');
+        const sidebar = $('#sidebar');
+        const isOpen = sidebar ? !sidebar.classList.contains('collapsed') : true;
         setDesktopSidebar(!isOpen);
     }
 
     /* ==========================================================
        搜索
        ========================================================== */
-    function performSearch(query) {
-        const data = window.MetaKnowData;
-        if (!data?.searchIndex) return [];
+    async function performSearch(query) {
+        const data = await getIndex();
+        if (!data.searchIndex || !data.searchIndex.length) return [];
 
         const q = query.trim().toLowerCase();
         if (!q) return data.searchIndex.slice(0, 8);
@@ -300,11 +307,11 @@
                 let score = 0;
 
                 if (title === q) score += 100;
-                else if (title.includes(q)) score += 50;
-                if (summary.includes(q)) score += 20;
-                if (category.includes(q)) score += 10;
+                else if (title.indexOf(q) !== -1) score += 50;
+                if (summary.indexOf(q) !== -1) score += 20;
+                if (category.indexOf(q) !== -1) score += 10;
 
-                return { item, score };
+                return { item: item, score: score };
             })
             .filter((r) => r.score > 0)
             .sort((a, b) => b.score - a.score)
@@ -317,33 +324,25 @@
         if (!panel) return;
 
         if (!results.length) {
-            panel.innerHTML = `
-                <div class="search-empty">
-                    <i class="fas fa-search"></i>
-                    <p>${query ? '没有找到匹配的内容' : '还没有任何页面'}</p>
-                </div>
-            `;
+            panel.innerHTML = '<div class="search-empty">' +
+                '<i class="fas fa-search"></i>' +
+                '<p>' + (query ? '没有找到匹配的内容' : '还没有任何页面') + '</p>' +
+                '</div>';
             return;
         }
 
         let html = '<div class="search-results-inner">';
         results.forEach((item, i) => {
-            // item.path 是短 key
-            html += `
-                <a class="search-result-item${i === state.searchIndex ? ' sel' : ''}"
-                   href="#${encodeURI(item.path)}"
-                   data-index="${i}"
-                   style="animation-delay:${i * 25}ms">
-                    <div class="search-result-icon">
-                        <i class="fas fa-file-lines"></i>
-                    </div>
-                    <div class="search-result-body">
-                        <div class="search-result-title">${highlight(item.title, query)}</div>
-                        ${item.summary ? `<div class="search-result-desc">${highlight(item.summary, query)}</div>` : ''}
-                        ${item.category ? `<span class="search-result-category">${escapeHtml(item.category)}</span>` : ''}
-                    </div>
-                </a>
-            `;
+            html += '<a class="search-result-item' + (i === state.searchIndex ? ' sel' : '') + '"' +
+                ' href="#' + encodeURI(item.path) + '"' +
+                ' data-index="' + i + '"' +
+                ' style="animation-delay:' + (i * 25) + 'ms">' +
+                '<div class="search-result-icon"><i class="fas fa-file-lines"></i></div>' +
+                '<div class="search-result-body">' +
+                '<div class="search-result-title">' + highlight(item.title, query) + '</div>' +
+                (item.summary ? '<div class="search-result-desc">' + highlight(item.summary, query) + '</div>' : '') +
+                (item.category ? '<span class="search-result-category">' + escapeHtml(item.category) + '</span>' : '') +
+                '</div></a>';
         });
         html += '</div>';
         panel.innerHTML = html;
@@ -380,17 +379,17 @@
         const panel = $('#searchResults');
         if (!input || !wrapper || !panel) return;
 
-        input.addEventListener('focus', () => {
-            const results = performSearch(input.value);
+        input.addEventListener('focus', async () => {
+            const results = await performSearch(input.value);
             state.searchIndex = 0;
             state.searchResults = results;
             renderSearchResults(results, input.value);
             openSearchPanel();
         });
 
-        input.addEventListener('input', () => {
+        input.addEventListener('input', async () => {
             wrapper.classList.toggle('has-text', input.value.length > 0);
-            const results = performSearch(input.value);
+            const results = await performSearch(input.value);
             state.searchIndex = 0;
             state.searchResults = results;
             renderSearchResults(results, input.value);
@@ -423,12 +422,14 @@
             }
         });
 
-        clearBtn?.addEventListener('click', () => {
-            input.value = '';
-            wrapper.classList.remove('has-text');
-            closeSearchPanel();
-            input.focus();
-        });
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                input.value = '';
+                wrapper.classList.remove('has-text');
+                closeSearchPanel();
+                input.focus();
+            });
+        }
 
         document.addEventListener('click', (e) => {
             if (!wrapper.contains(e.target) && !panel.contains(e.target)) {
@@ -482,19 +483,18 @@
         }
 
         let body = md;
-        if (body.startsWith('---')) {
+        if (body.indexOf('---') === 0) {
             const end = body.indexOf('\n---', 3);
             if (end !== -1) {
                 body = body.slice(end + 4).replace(/^\s*\n/, '');
             }
         }
 
-        // 保护所有 [[...]] 内的内容，避免 marked 把 URL 变成 <a>
         const placeholders = [];
         body = body.replace(/\[\[[^\]]+\]\]/g, (match) => {
             const idx = placeholders.length;
             placeholders.push(match);
-            return `\u0000WIKILINK${idx}\u0000`;
+            return '\u0000WIKILINK' + idx + '\u0000';
         });
 
         let html;
@@ -505,7 +505,6 @@
             return '<pre>' + escapeHtml(body) + '</pre>';
         }
 
-        // 还原占位符
         html = html.replace(/\u0000WIKILINK(\d+)\u0000/g, (m, i) => {
             return placeholders[+i] || m;
         });
@@ -519,49 +518,43 @@
             .replace(/\sclass="[^"]*marked[^"]*"/gi, '');
     }
 
-    /* ==========================================================
-       Wiki 双链语法 [[页面标题]]
-       ========================================================== */
-    function resolveWikiLinks(html) {
-        const data = window.MetaKnowData;
-        if (!data?.searchIndex) return html;
+    async function resolveWikiLinks(html) {
+        const data = await getIndex();
+        if (!data.searchIndex || !data.searchIndex.length) return html;
 
         return html.replace(/\[\[([^\]]+)\]\]/g, (match, inner) => {
             let name = inner.trim();
-            if (name.includes(':')) return match;
+            if (name.indexOf(':') !== -1) return match;
 
-            // 检查是否是"新窗口"语法
             let newTab = false;
-            if (name.endsWith('!')) {
+            if (name.charAt(name.length - 1) === '!') {
                 newTab = true;
                 name = name.slice(0, -1).trim();
-            } else if (name.endsWith('|new')) {
+            } else if (name.slice(-4) === '|new') {
                 newTab = true;
                 name = name.slice(0, -4).trim();
             }
 
             const found = data.searchIndex.find((item) => item.title === name);
             if (found) {
-                const href = `#${encodeURI(found.path)}`;
+                const href = '#' + encodeURI(found.path);
                 if (newTab) {
-                    return `<a href="${href}" target="_blank" rel="noopener noreferrer">${name}</a>`;
+                    return '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + name + '</a>';
                 }
-                return `<a href="${href}">${name}</a>`;
+                return '<a href="' + href + '">' + name + '</a>';
             }
-            return `<span class="wiki-link-broken" title="未找到页面">${name}</span>`;
+            return '<span class="wiki-link-broken" title="未找到页面">' + name + '</span>';
         });
     }
 
     /* ==========================================================
-       Giscus 评论区
+       Giscus
        ========================================================== */
     function loadGiscus(path) {
         const container = $('#giscus-container');
         if (!container) return;
 
         container.innerHTML = '';
-
-        // 首页不显示评论区
         if (!path || path === '/') return;
 
         const mount = document.createElement('div');
@@ -575,7 +568,7 @@
         script.setAttribute('data-category', 'Announcements');
         script.setAttribute('data-category-id', 'DIC_kwDOUBIrTM4DGaTx');
         script.setAttribute('data-mapping', 'specific');
-        script.setAttribute('data-term', path);   // 短 key 作为 term
+        script.setAttribute('data-term', path);
         script.setAttribute('data-strict', '0');
         script.setAttribute('data-reactions-enabled', '1');
         script.setAttribute('data-emit-metadata', '0');
@@ -593,64 +586,39 @@
        ========================================================== */
     const contentRoot = () => $('#content-root');
 
-    function renderWelcome() {
-        const data = window.MetaKnowData;
-        const site = data?.site || {};
+    async function renderWelcome() {
+        const data = await getIndex();
+        const site = data.site || {};
         document.title = site.title || 'MetaKnow';
         state.currentPath = null;
 
         const root = contentRoot();
         if (!root) return;
 
-        root.innerHTML = `
-            <section class="welcome">
-                <div class="welcome-mark">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"
-                         stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 3 3 8l9 5 9-5-9-5Z"/>
-                        <path d="m3 16 9 5 9-5"/>
-                        <path d="m3 12 9 5 9-5"/>
-                    </svg>
-                </div>
-                <h1>${escapeHtml(site.title || 'MetaKnow')}</h1>
-                <p class="tagline">${escapeHtml(site.description || '现代知识库引擎')}</p>
-
-                <div class="welcome-hint">
-                    <i class="fas fa-sparkles"></i>
-                    <span>还没有内容，从下面三步开始</span>
-                </div>
-
-                <div class="welcome-steps">
-                    <div class="welcome-step">
-                        <span class="step-num">1</span>
-                        <div class="step-body">
-                            <div class="step-title">创建内容</div>
-                            <div class="step-desc">
-                                在 <code>pages/</code> 目录下新建 <code>.md</code> 或 <code>.html</code> 文件
-                            </div>
-                        </div>
-                    </div>
-                    <div class="welcome-step">
-                        <span class="step-num">2</span>
-                        <div class="step-body">
-                            <div class="step-title">注册页面</div>
-                            <div class="step-desc">
-                                在 <code>data.js</code> 的 <code>pageMap</code> 与 <code>navigation</code> 中加入条目
-                            </div>
-                        </div>
-                    </div>
-                    <div class="welcome-step">
-                        <span class="step-num">3</span>
-                        <div class="step-body">
-                            <div class="step-title">添加搜索</div>
-                            <div class="step-desc">
-                                在 <code>searchIndex</code> 中补充标题与摘要
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        `;
+        root.innerHTML = '<section class="welcome">' +
+            '<div class="welcome-mark">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+            '<path d="M12 3 3 8l9 5 9-5-9-5Z"/>' +
+            '<path d="m3 16 9 5 9-5"/>' +
+            '<path d="m3 12 9 5 9-5"/>' +
+            '</svg></div>' +
+            '<h1>' + escapeHtml(site.title || 'MetaKnow') + '</h1>' +
+            '<p class="tagline">' + escapeHtml(site.description || '现代知识库引擎') + '</p>' +
+            '<div class="welcome-hint"><i class="fas fa-sparkles"></i><span>还没有内容，从下面三步开始</span></div>' +
+            '<div class="welcome-steps">' +
+            '<div class="welcome-step"><span class="step-num">1</span><div class="step-body">' +
+            '<div class="step-title">创建内容</div>' +
+            '<div class="step-desc">在 <code>pages/</code> 目录下新建 <code>.md</code> 或 <code>.html</code> 文件</div>' +
+            '</div></div>' +
+            '<div class="welcome-step"><span class="step-num">2</span><div class="step-body">' +
+            '<div class="step-title">自动索引</div>' +
+            '<div class="step-desc">push 后 GitHub Actions 会自动扫描并生成导航</div>' +
+            '</div></div>' +
+            '<div class="welcome-step"><span class="step-num">3</span><div class="step-body">' +
+            '<div class="step-title">自定义（可选）</div>' +
+            '<div class="step-desc">在 <code>data.js</code> 中填写可覆盖自动索引</div>' +
+            '</div></div>' +
+            '</div></section>';
 
         const giscus = $('#giscus-container');
         if (giscus) giscus.innerHTML = '';
@@ -658,9 +626,6 @@
         if (toc) toc.style.display = 'none';
     }
 
-    /* ==========================================================
-       右侧目录
-       ========================================================== */
     function renderToc() {
         const tocNav = $('#tocNav');
         const tocContainer = $('#desktopToc');
@@ -680,22 +645,17 @@
             return;
         }
 
-        // 恢复显示（因为可能是从首页切回来）
         tocContainer.style.display = '';
 
         let html = '';
         headings.forEach((h, i) => {
-            if (!h.id) {
-                h.id = 'heading-' + i;
-            }
+            if (!h.id) h.id = 'heading-' + i;
             const cls = h.tagName === 'H2' ? 'toc-h2' : 'toc-h3';
-            // h3 缩进一点
             const indent = h.tagName === 'H3' ? 'padding-left:1.6rem;' : '';
-            html += `<a href="#${h.id}" data-target="${h.id}" class="${cls}" style="${indent}">${h.textContent}</a>`;
+            html += '<a href="#' + h.id + '" data-target="' + h.id + '" class="' + cls + '" style="' + indent + '">' + h.textContent + '</a>';
         });
         tocNav.innerHTML = html;
 
-        // 点击目录项平滑滚动
         tocNav.querySelectorAll('a').forEach((link) => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -708,7 +668,6 @@
             });
         });
 
-        // 滚动高亮
         setupTocScrollSpy(headings);
     }
 
@@ -716,7 +675,6 @@
         const tocNav = $('#tocNav');
         if (!tocNav) return;
 
-        // 断开之前的 observer（避免切页面后重复）
         if (window.__tocObserver) {
             window.__tocObserver.disconnect();
         }
@@ -732,10 +690,7 @@
                     }
                 });
             },
-            {
-                rootMargin: '-80px 0px -70% 0px',
-                threshold: 0
-            }
+            { rootMargin: '-80px 0px -70% 0px', threshold: 0 }
         );
 
         headings.forEach((h) => observer.observe(h));
@@ -745,12 +700,7 @@
     function renderLoading() {
         const root = contentRoot();
         if (root) {
-            root.innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <span>加载中…</span>
-                </div>
-            `;
+            root.innerHTML = '<div class="loading"><div class="spinner"></div><span>加载中…</span></div>';
         }
         const giscus = $('#giscus-container');
         if (giscus) giscus.innerHTML = '';
@@ -762,63 +712,46 @@
 
         document.title = '页面不存在 · MetaKnow';
 
-        root.innerHTML = `
-            <div class="not-found">
-                <div class="not-found-icon">
-                    <i class="fas fa-compass"></i>
-                </div>
-                <h1>404</h1>
-                <p class="nf-title">找不到这个页面</p>
-                <p class="nf-desc">
-                    你访问的页面可能已被移动、删除，或从未存在过。
-                </p>
-                <div class="nf-path">${escapeHtml(path)}</div>
-                <div class="nf-actions">
-                    <a href="#/" class="btn btn-primary">
-                        <i class="fas fa-home"></i>
-                        返回首页
-                    </a>
-                    <a href="https://github.com/BlockRhapsody" target="_blank" class="btn btn-secondary">
-                        <i class="fas fa-circle-exclamation"></i>
-                        反馈问题
-                    </a>
-                </div>
-            </div>
-        `;
+        root.innerHTML = '<div class="not-found">' +
+            '<div class="not-found-icon"><i class="fas fa-compass"></i></div>' +
+            '<h1>404</h1>' +
+            '<p class="nf-title">找不到这个页面</p>' +
+            '<p class="nf-desc">你访问的页面可能已被移动、删除，或从未存在过。</p>' +
+            '<div class="nf-path">' + escapeHtml(path) + '</div>' +
+            '<div class="nf-actions">' +
+            '<a href="#/" class="btn btn-primary"><i class="fas fa-home"></i> 返回首页</a>' +
+            '<a href="https://github.com/BlockRhapsody" target="_blank" class="btn btn-secondary"><i class="fas fa-circle-exclamation"></i> 反馈问题</a>' +
+            '</div></div>';
 
         const giscus = $('#giscus-container');
         if (giscus) giscus.innerHTML = '';
-        
         const toc = $('#desktopToc');
         if (toc) toc.style.display = 'none';
     }
 
     async function renderPage(path) {
         if (!path || path === '/' || path === '') {
-            renderWelcome();
+            await renderWelcome();
             return;
         }
 
-        const data = window.MetaKnowData;
+        const data = await getIndex();
 
-        /* 短 key → 真实路径 */
         let realPath = path;
-        if (data?.pageMap && data.pageMap[path]) {
+        if (data.pageMap && data.pageMap[path]) {
             realPath = data.pageMap[path];
         }
 
-        state.currentPath = path;   // 状态用短 key
+        state.currentPath = path;
         renderLoading();
 
-        // 找标题（用短 key 匹配 searchIndex）
         let pageTitle = path;
-        if (data?.searchIndex) {
+        if (data.searchIndex) {
             const found = data.searchIndex.find((item) => item.path === path);
             if (found) pageTitle = found.title;
         }
-        document.title = `${pageTitle} · ${data?.site?.title || 'MetaKnow'}`;
+        document.title = pageTitle + ' · ' + ((data.site && data.site.title) || 'MetaKnow');
 
-        /* 缓存 key 用短 key */
         const cacheKey = 'mk_cache_' + path;
         const cacheTimeKey = cacheKey + '_time';
 
@@ -827,38 +760,36 @@
             const cached = sessionStorage.getItem(cacheKey);
             const cacheTime = sessionStorage.getItem(cacheTimeKey);
 
-            if (cached && cacheTime && Date.now() - parseInt(cacheTime) < CACHE_MAX_AGE) {
+            if (cached && cacheTime && Date.now() - parseInt(cacheTime, 10) < CACHE_MAX_AGE) {
                 content = cached;
             } else {
-                /* 用 realPath 去 fetch */
                 const response = await fetch(realPath);
                 if (!response.ok) {
                     if (response.status === 404) {
                         renderNotFound(path);
                         return;
                     }
-                    throw new Error(`HTTP ${response.status}`);
+                    throw new Error('HTTP ' + response.status);
                 }
                 content = await response.text();
                 try {
                     sessionStorage.setItem(cacheKey, content);
                     sessionStorage.setItem(cacheTimeKey, String(Date.now()));
-                } catch {}
+                } catch (e) {}
             }
 
-            /* ⭐ 用 realPath 判断文件类型 */
-            const isMarkdown = realPath.toLowerCase().endsWith('.md');
+            const isMarkdown = realPath.toLowerCase().slice(-3) === '.md';
             let html;
 
             if (isMarkdown) {
                 html = renderMarkdown(content);
                 html = stripMarkedStyles(html);
-                html = resolveWikiLinks(html);
-                html = `<article class="article">${html}</article>`;
+                html = await resolveWikiLinks(html);
+                html = '<article class="article">' + html + '</article>';
             } else {
                 html = content;
                 if (!/<article[\s>]/i.test(html) && !/<!DOCTYPE/i.test(html)) {
-                    html = `<article class="article">${html}</article>`;
+                    html = '<article class="article">' + html + '</article>';
                 }
             }
 
@@ -873,41 +804,24 @@
                 }
             }
 
-            /* 侧边栏高亮用短 key */
             updateActiveNav(path);
-
-            /* Giscus 用短 key 作为 term */
             loadGiscus(path);
-
             window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            /* 生成右侧目录 */
             renderToc();
 
         } catch (error) {
             console.error('[MetaKnow] 加载失败:', error);
             const root = contentRoot();
             if (root) {
-                root.innerHTML = `
-                    <div class="not-found">
-                        <div class="not-found-icon">
-                            <i class="fas fa-triangle-exclamation"></i>
-                        </div>
-                        <h1>加载失败</h1>
-                        <p class="nf-title">无法加载页面内容</p>
-                        <p class="nf-desc">${escapeHtml(error.message || '未知错误')}</p>
-                        <div class="nf-actions">
-                            <a href="#/" class="btn btn-primary">
-                                <i class="fas fa-home"></i>
-                                返回首页
-                            </a>
-                            <button class="btn btn-secondary" onclick="location.reload()">
-                                <i class="fas fa-rotate-right"></i>
-                                重新加载
-                            </button>
-                        </div>
-                    </div>
-                `;
+                root.innerHTML = '<div class="not-found">' +
+                    '<div class="not-found-icon"><i class="fas fa-triangle-exclamation"></i></div>' +
+                    '<h1>加载失败</h1>' +
+                    '<p class="nf-title">无法加载页面内容</p>' +
+                    '<p class="nf-desc">' + escapeHtml(error.message || '未知错误') + '</p>' +
+                    '<div class="nf-actions">' +
+                    '<a href="#/" class="btn btn-primary"><i class="fas fa-home"></i> 返回首页</a>' +
+                    '<button class="btn btn-secondary" onclick="location.reload()"><i class="fas fa-rotate-right"></i> 重新加载</button>' +
+                    '</div></div>';
             }
         }
     }
@@ -923,10 +837,10 @@
 
             if (isActive) {
                 const submenu = link.closest('.nav-submenu');
-                const toggle = submenu?.previousElementSibling;
+                const toggle = submenu ? submenu.previousElementSibling : null;
                 if (submenu && !submenu.classList.contains('open')) {
                     submenu.classList.add('open');
-                    toggle?.classList.add('open');
+                    if (toggle) toggle.classList.add('open');
                 }
             }
         });
@@ -938,58 +852,49 @@
     function parseHash() {
         const hash = location.hash || '#/';
         let path = hash.replace(/^#\/?/, '');
-        try {
-            path = decodeURIComponent(path);
-        } catch {}
+        try { path = decodeURIComponent(path); } catch (e) {}
         return path;
     }
 
-    function handleRoute() {
+    async function handleRoute() {
         const path = parseHash();
         if (path === state.currentPath) return;
-        renderPage(path);
+        await renderPage(path);
     }
 
     /* ==========================================================
        初始化
        ========================================================== */
-    function init() {
-        // 主题
+    async function init() {
         applyTheme(getStoredTheme());
-
-        // Marked
         configureMarked();
 
-        // 侧边栏
-        renderSidebar();
-        restoreSidebarState();
+        await renderSidebar();
 
-        // 桌面端侧边栏初始状态
         if (window.innerWidth >= 1024) {
             setDesktopSidebar(getDesktopSidebarOpen());
         }
 
-        // 事件绑定
-        $('#hamburgerBtn')?.addEventListener('click', () => {
-            // 桌面端：切换侧边栏展开/收起
-            if (window.innerWidth >= 1024) {
-                toggleDesktopSidebar();
-            } else {
-                // 移动端：保持原逻辑
-                toggleMobileSidebar();
-            }
-        });
-        $('#mobileOverlay')?.addEventListener('click', closeMobileSidebar);
-        $('#themeBtn')?.addEventListener('click', toggleTheme);
+        const hb = $('#hamburgerBtn');
+        if (hb) {
+            hb.addEventListener('click', () => {
+                if (window.innerWidth >= 1024) {
+                    toggleDesktopSidebar();
+                } else {
+                    toggleMobileSidebar();
+                }
+            });
+        }
+        const ov = $('#mobileOverlay');
+        if (ov) ov.addEventListener('click', closeMobileSidebar);
+        const tb = $('#themeBtn');
+        if (tb) tb.addEventListener('click', toggleTheme);
 
-        // 搜索
         initSearch();
 
-        // 路由
-        handleRoute();
+        await handleRoute();
         window.addEventListener('hashchange', handleRoute);
 
-        // 移动端点链接后关闭侧边栏
         document.addEventListener('click', (e) => {
             const link = e.target.closest('.sidebar a[href^="#"]');
             if (link && window.innerWidth < 1024) {
@@ -997,24 +902,22 @@
             }
         });
 
-        // 窗口尺寸变化
         let lastWidth = window.innerWidth;
         window.addEventListener('resize', () => {
             const w = window.innerWidth;
             if (lastWidth < 1024 && w >= 1024) {
                 closeMobileSidebar();
-                // 从移动端切到桌面端：恢复桌面端记忆的状态
                 setDesktopSidebar(getDesktopSidebarOpen());
             }
             if (lastWidth >= 1024 && w < 1024) {
-                // 从桌面端切到移动端：清除桌面端的收起状态
-                $('#sidebar')?.classList.remove('collapsed');
-                $('#mainWrapper')?.classList.remove('sidebar-collapsed');
+                const sb = $('#sidebar');
+                const mw = $('#mainWrapper');
+                if (sb) sb.classList.remove('collapsed');
+                if (mw) mw.classList.remove('sidebar-collapsed');
             }
             lastWidth = w;
         }, { passive: true });
 
-        // ESC 关闭
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && state.sidebarOpen) {
                 closeMobileSidebar();
@@ -1022,7 +925,6 @@
         });
     }
 
-    // DOM 就绪
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
