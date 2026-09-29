@@ -7,8 +7,6 @@ on:
       - 'pages/**'
       - 'scripts/build-index.js'
       - '.github/workflows/build-index.yml'
-    paths-ignore:
-      - 'data-index.json'
 
 permissions:
   contents: write
