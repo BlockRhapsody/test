@@ -39,7 +39,7 @@ window.MetaKnowData = {
     /* ---------- 短 key → 真实文件路径 ----------
        key 就是页面标题（navigation 和 searchIndex 里的 title）
     ------------------------------------------------ */
-    pageMap: {
+    /* pageMap: {
         '快速开始': 'pages/start/快速开始.md',
         '编写指南': 'pages/docs/编写指南.md',
         '测试': 'pages/docs/test.md',
@@ -47,7 +47,7 @@ window.MetaKnowData = {
     },
 
     /* ---------- 侧边栏导航 ---------- */
-    navigation: [
+    /* navigation: [
         {
             title: '开始',
             icon: 'rocket',
@@ -66,10 +66,10 @@ window.MetaKnowData = {
     ],
 
     /* ---------- 首页卡片 ---------- */
-    cards: [],
+    /* cards: [],
 
     /* ---------- 搜索索引 ---------- */
-    searchIndex: [
+    /* searchIndex: [
         {
             title: '快速开始',
             path: '快速开始',
