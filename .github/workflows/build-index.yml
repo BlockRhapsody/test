@@ -6,7 +6,7 @@ on:
     paths:
       - 'pages/**'
       - 'scripts/build-index.js'
-      - '.github/workflows/build-index.yml'
+      - '.github/workflows/build-index.yml'      # 手动触发测试
 
 permissions:
   contents: write
