@@ -1,0 +1,68 @@
+{
+  "generatedAt": "2026-09-29T12:20:29.394Z",
+  "pageCount": 5,
+  "navigation": [
+    {
+      "title": "about",
+      "icon": "folder",
+      "items": [
+        "关于 MetaKnow"
+      ]
+    },
+    {
+      "title": "docs",
+      "icon": "folder",
+      "items": [
+        "组件测试",
+        "测试页",
+        "编写指南"
+      ]
+    },
+    {
+      "title": "start",
+      "icon": "folder",
+      "items": [
+        "快速开始"
+      ]
+    }
+  ],
+  "searchIndex": [
+    {
+      "title": "关于 MetaKnow",
+      "path": "关于 MetaKnow",
+      "category": "about",
+      "summary": "MetaKnow 是什么、为什么存在、以及它是怎么实现的"
+    },
+    {
+      "title": "组件测试",
+      "path": "组件测试",
+      "category": "docs",
+      "summary": "MetaKnow 组件系统的完整测试页面"
+    },
+    {
+      "title": "测试页",
+      "path": "测试页",
+      "category": "docs",
+      "summary": "MetaKnow 组件系统的完整测试"
+    },
+    {
+      "title": "编写指南",
+      "path": "编写指南",
+      "category": "docs",
+      "summary": "MetaKnow 支持的全部写作语法"
+    },
+    {
+      "title": "快速开始",
+      "path": "快速开始",
+      "category": "start",
+      "summary": "五分钟内搭建你的第一个 MetaKnow 知识库"
+    }
+  ],
+  "pageMap": {
+    "关于 MetaKnow": "pages/about/关于MetaKnow.md",
+    "组件测试": "pages/docs/test.md",
+    "测试页": "pages/docs/测试.md",
+    "编写指南": "pages/docs/编写指南.md",
+    "快速开始": "pages/start/快速开始.md"
+  }
+}
