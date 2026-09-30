@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-29T12:42:22.179Z",
-  "pageCount": 5,
+  "generatedAt": "2026-09-30T16:39:41.770Z",
+  "pageCount": 6,
   "navigation": [
     {
       "title": "about",
@@ -13,6 +13,7 @@
       "title": "docs",
       "icon": "folder",
       "items": [
+        "图表测试",
         "组件测试",
         "测试页",
         "编写指南"
@@ -40,6 +41,12 @@
       "summary": "MetaKnow 组件系统的完整测试页面"
     },
     {
+      "title": "图表测试",
+      "path": "图表测试",
+      "category": "docs",
+      "summary": "MetaKnow 图表系统测试页"
+    },
+    {
       "title": "测试页",
       "path": "测试页",
       "category": "docs",
@@ -61,6 +68,7 @@
   "pageMap": {
     "关于 MetaKnow": "pages/about/关于MetaKnow.md",
     "组件测试": "pages/docs/test.md",
+    "图表测试": "pages/docs/图表测试.md",
     "测试页": "pages/docs/测试.md",
     "编写指南": "pages/docs/编写指南.md",
     "快速开始": "pages/start/快速开始.md"
