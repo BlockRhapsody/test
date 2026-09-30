@@ -800,7 +800,7 @@
                 void root.offsetWidth;
                 root.style.animation = '';
                 if (window.MetaKnowComponents && window.MetaKnowComponents.render) {
-                    window.MetaKnowComponents.render(root);
+                    await window.MetaKnowComponents.render(root);
                 }
             }
 
