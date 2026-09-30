@@ -347,14 +347,13 @@
             '</div>';
     }
 
-    function processBlocks(container) {
-        var blocks = container.querySelectorAll('pre > code[class*="language-"]');
+    async function processBlocks(container) {
+        const blocks = container.querySelectorAll('pre > code[class*="language-"]');
 
-        for (var i = 0; i < blocks.length; i++) {
-            var codeEl = blocks[i];
-            var lang = codeEl.className.replace('language-', '').split(/\s+/)[0];
+        for (const codeEl of blocks) {
+            const lang = codeEl.className.replace('language-', '').split(/\s+/)[0];
 
-            var html = null;
+            let html = null;
             switch (lang) {
                 case 'callout': html = renderCallout(codeEl); break;
                 case 'card':    html = renderCard(codeEl);    break;
@@ -362,18 +361,37 @@
                 case 'details': html = renderDetails(codeEl); break;
                 case 'steps':   html = renderSteps(codeEl);   break;
                 case 'tabs':    html = renderTabs(codeEl);    break;
+                case 'chart':   html = await renderChartAsync(codeEl); break;
                 default: continue;
             }
 
             if (html !== null) {
-                var pre = codeEl.parentNode;
-                var wrapper = document.createElement('div');
+                const pre = codeEl.parentNode;
+                const wrapper = document.createElement('div');
                 wrapper.innerHTML = html.trim();
                 if (wrapper.firstElementChild) {
                     pre.parentNode.replaceChild(wrapper.firstElementChild, pre);
                 }
             }
         }
+    }
+
+    async function renderChartAsync(codeEl) {
+        try {
+            const mod = await import('./js/charts/index.js');
+            return mod.renderChart(codeEl);
+        } catch (e) {
+            console.error('[MetaKnow] 图表加载失败:', e);
+            return '<div class="chart-error">图表加载失败</div>';
+        }
+    }
+
+    async function bindChartTooltipsAsync(root) {
+        if (!root.querySelector('.mk-chart')) return;
+        try {
+            const mod = await import('./js/charts/index.js');
+            mod.bindChartTooltips(root);
+        } catch (e) { /* ignore */ }
     }
 
     function processInline(container) {
@@ -505,11 +523,12 @@
         });
     }
 
-    function renderComponents(root) {
+    async function renderComponents(root) {
         if (!root) root = document;
-        processBlocks(root);
+        await processBlocks(root);
         processInline(root);
         bindInteractions(root);
+        await bindChartTooltipsAsync(root);
     }
 
     window.MetaKnowComponents = {
