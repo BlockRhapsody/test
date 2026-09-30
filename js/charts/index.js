@@ -13,35 +13,36 @@ const RENDERERS = {
 
 /* 解析 ```chart xxx 的配置 */
 function parseChartConfig(codeEl) {
+    const info = codeEl.dataset.info || '';
     const raw = codeEl.textContent || '';
     const lines = raw.split('\n');
 
-    // 第一行是 type（bar / line / pie ...）
-    const type = (lines[0] || '').trim().toLowerCase();
+    let type = (info || '').trim().toLowerCase();
+    let startIdx = 0;
+
+    if (!type) {
+        type = (lines[0] || '').trim().toLowerCase();
+        startIdx = 1;
+    }
 
     const options = {};
     const data = { labels: [], values: [], series: [] };
 
-    let currentSeries = null;
-
-    for (let i = 1; i < lines.length; i++) {
+    for (let i = startIdx; i < lines.length; i++) {
         const line = lines[i];
         if (!line.trim()) continue;
 
-        // 支持缩进的 series 子项
         const indentMatch = line.match(/^(\s+)(.+)$/);
         const isIndented = !!indentMatch;
-
         const content = isIndented ? indentMatch[2] : line;
+
         const colonIdx = content.indexOf(':');
         if (colonIdx === -1) continue;
 
         const key = content.slice(0, colonIdx).trim();
         const val = content.slice(colonIdx + 1).trim();
 
-        // 顶层 key
         if (!isIndented) {
-            currentSeries = null;
             switch (key) {
                 case 'title':
                 case '标题':
@@ -59,23 +60,15 @@ function parseChartConfig(codeEl) {
                     options.width = parseInt(val, 10) || undefined; break;
                 case 'height':
                     options.height = parseInt(val, 10) || undefined; break;
-                case 'series':
-                case '系列':
-                    // 后面缩进行会填充
-                    break;
                 default:
                     options[key] = val;
             }
         } else {
-            // series 子项
-            if (!data.series) data.series = [];
-            const s = {
+            data.series.push({
                 label: key,
                 values: parseNumberList(val),
                 color: null
-            };
-            data.series.push(s);
-            currentSeries = s;
+            });
         }
     }
 
