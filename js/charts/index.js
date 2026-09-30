@@ -1,97 +1,143 @@
 // ============================================================
 // MetaKnow Charts · 入口 + 路由
+// 语法：
+//   ```chart
+//   type: bar
+//   title: xxx
+//   labels: a, b, c
+//   data: 1, 2, 3
+//   ```
+// 多系列：
+//   任意非保留字 key 会被当作一个 series
 // ============================================================
 
 import { renderBar } from './bar.js';
 import { bindTooltipEvents } from './tooltip.js';
 import { parseCSV, parseNumberList } from './utils.js';
 
+/* ---------- 渲染器路由 ---------- */
 const RENDERERS = {
     bar: renderBar
     // line / pie / histogram / boxplot 后续加
 };
 
-/* 解析 ```chart xxx 的配置 */
+/* ---------- 保留字 ---------- */
+const RESERVED = [
+    'type', '类型',
+    'title', '标题',
+    'labels', '标签',
+    'data', '数据',
+    'color', '颜色',
+    'width', 'height',
+    'palette', '图例'
+];
+
+function isReserved(key) {
+    return RESERVED.indexOf(key.toLowerCase()) !== -1;
+}
+
+/* ---------- 解析 chart 代码块 ---------- */
 function parseChartConfig(codeEl) {
-    const info = codeEl.dataset.info || '';
     const raw = codeEl.textContent || '';
     const lines = raw.split('\n');
 
-    let type = (info || '').trim().toLowerCase();
-    let startIdx = 0;
-
-    if (!type) {
-        type = (lines[0] || '').trim().toLowerCase();
-        startIdx = 1;
-    }
-
     const options = {};
     const data = { labels: [], values: [], series: [] };
+    let type = '';
 
-    for (let i = startIdx; i < lines.length; i++) {
+    for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         if (!line.trim()) continue;
 
-        const indentMatch = line.match(/^(\s+)(.+)$/);
-        const isIndented = !!indentMatch;
-        const content = isIndented ? indentMatch[2] : line;
-
-        const colonIdx = content.indexOf(':');
+        const colonIdx = line.indexOf(':');
         if (colonIdx === -1) continue;
 
-        const key = content.slice(0, colonIdx).trim();
-        const val = content.slice(colonIdx + 1).trim();
+        const key = line.slice(0, colonIdx).trim();
+        const val = line.slice(colonIdx + 1).trim();
+        const keyLower = key.toLowerCase();
 
-        if (!isIndented) {
-            switch (key) {
-                case 'title':
-                case '标题':
-                    options.title = val; break;
-                case 'labels':
-                case '标签':
-                    data.labels = parseCSV(val); break;
-                case 'data':
-                case '数据':
-                    data.values = parseNumberList(val); break;
-                case 'color':
-                case '颜色':
-                    options.color = val; break;
-                case 'width':
-                    options.width = parseInt(val, 10) || undefined; break;
-                case 'height':
-                    options.height = parseInt(val, 10) || undefined; break;
-                default:
-                    options[key] = val;
-            }
-        } else {
+        if (!isReserved(key)) {
+            // 非保留字 → 作为一个 series
             data.series.push({
                 label: key,
                 values: parseNumberList(val),
                 color: null
             });
+            continue;
+        }
+
+        switch (keyLower) {
+            case 'type':
+            case '类型':
+                type = val.toLowerCase();
+                break;
+
+            case 'title':
+            case '标题':
+                options.title = val;
+                break;
+
+            case 'labels':
+            case '标签':
+                data.labels = parseCSV(val);
+                break;
+
+            case 'data':
+            case '数据':
+                data.values = parseNumberList(val);
+                break;
+
+            case 'color':
+            case '颜色':
+                options.color = val;
+                break;
+
+            case 'width':
+                options.width = parseInt(val, 10) || undefined;
+                break;
+
+            case 'height':
+                options.height = parseInt(val, 10) || undefined;
+                break;
+
+            case 'palette':
+                options.palette = parseCSV(val);
+                break;
+
+            case '图例':
+                options.legend = val;
+                break;
+
+            default:
+                options[key] = val;
         }
     }
 
     return { type: type, data: data, options: options };
 }
 
+/* ---------- 对外：渲染单个 chart 代码块 ---------- */
 export function renderChart(codeEl) {
     const conf = parseChartConfig(codeEl);
-    const renderer = RENDERERS[conf.type];
 
+    if (!conf.type) {
+        return '<div class="chart-error">图表缺少 type 属性</div>';
+    }
+
+    const renderer = RENDERERS[conf.type];
     if (!renderer) {
-        return '<div class="chart-error">未知的图表类型：' +
-            (conf.type || '空') + '</div>';
+        return '<div class="chart-error">未知的图表类型：' + conf.type + '</div>';
     }
 
     try {
         return renderer(conf.data, conf.options);
     } catch (e) {
         console.error('[MetaKnow Charts] 渲染失败:', e);
-        return '<div class="chart-error">图表渲染失败</div>';
+        return '<div class="chart-error">图表渲染失败：' + (e.message || '') + '</div>';
     }
 }
 
+/* ---------- 对外：绑定所有图表的 tooltip ---------- */
 export function bindChartTooltips(container) {
     container.querySelectorAll('.mk-chart').forEach(function (el) {
         if (el.dataset.tooltipBound) return;
