@@ -10,7 +10,15 @@ import {
 export function renderBar(data, options) {
     const width  = options.width  || 640;
     const height = options.height || 400;
-    const pad = { top: 44, right: 24, bottom: 56, left: 56 };
+    const needRotateCheck = (data.labels || []).some(function (l) {
+        return String(l).length > 4;
+    });
+    const pad = {
+        top: 44,
+        right: 24,
+        bottom: needRotateCheck ? 80 : 56,
+        left: 56
+    };
     const plotW = width - pad.left - pad.right;
     const plotH = height - pad.top - pad.bottom;
 
@@ -78,13 +86,20 @@ export function renderBar(data, options) {
         class: 'axis-line'
     }));
 
-    // 条形
+    // 每组数据的数量 = labels 数量（或第一个 series 的长度）
     const groupCount = series.length;
-    const slotW = plotW / values.length;
+    const itemCount = labels.length || (series[0] && series[0].values.length) || 0;
+
+    if (itemCount === 0) {
+        return '<div class="chart-error">没有可显示的数据项</div>';
+    }
+
+    const slotW = plotW / itemCount;
     const barW = slotW * 0.7 / groupCount;
     const groupPad = (slotW - barW * groupCount) / 2;
 
-    values.forEach(function (v, i) {
+    // 条形
+    for (let i = 0; i < itemCount; i++) {
         series.forEach(function (s, si) {
             const val = s.values[i];
             if (val === undefined || val === null || isNaN(val)) return;
@@ -108,16 +123,42 @@ export function renderBar(data, options) {
                 'data-tooltip': escapeHtml(tip)
             }));
         });
-    });
+    }
 
     // X 轴标签
+    const labelCount = labels.length;
+
+    // 计算间隔：标签太多时隔一个显示
+    let step = 1;
+    if (labelCount > 16) step = 3;
+    else if (labelCount > 10) step = 2;
+
+    // 判断是否需要旋转：任一标签超过 4 个字就旋转
+    const needRotate = labels.some(function (l) {
+        return String(l).length > 4;
+    });
+
+    const labelY = pad.top + plotH + 22;
+
     labels.forEach(function (label, i) {
+        // 间隔显示：保留能被 step 整除的
+        if (i % step !== 0) return;
+
         const x = pad.left + slotW * i + slotW / 2;
-        parts.push(svgEl('text', {
-            x: x, y: pad.top + plotH + 22,
-            'text-anchor': 'middle',
+        const attrs = {
+            x: x,
+            y: labelY,
             class: 'axis-text'
-        }, escapeHtml(label)));
+        };
+
+        if (needRotate) {
+            attrs['text-anchor'] = 'end';
+            attrs.transform = 'rotate(-30 ' + x + ' ' + labelY + ')';
+        } else {
+            attrs['text-anchor'] = 'middle';
+        }
+
+        parts.push(svgEl('text', attrs, escapeHtml(label)));
     });
 
     // 图例（多系列时才显示）
