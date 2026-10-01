@@ -378,7 +378,7 @@
 
     async function renderChartAsync(codeEl) {
         try {
-            const mod = await import('./js/charts/index.js');
+            const mod = await import('./charts/index.js');
             return mod.renderChart(codeEl);
         } catch (e) {
             console.error('[MetaKnow] 图表加载失败:', e);
@@ -389,7 +389,7 @@
     async function bindChartTooltipsAsync(root) {
         if (!root.querySelector('.mk-chart')) return;
         try {
-            const mod = await import('./js/charts/index.js');
+            const mod = await import('./charts/index.js');
             mod.bindChartTooltips(root);
         } catch (e) { /* ignore */ }
     }
