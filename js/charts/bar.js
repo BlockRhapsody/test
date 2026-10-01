@@ -1,5 +1,5 @@
 // ============================================================
-// MetaKnow Charts · 条形图呃呃呃
+// MetaKnow Charts · 条形图
 // ============================================================
 
 import {
@@ -17,13 +17,21 @@ export function renderBar(data, options) {
     const labels = data.labels || [];
     const values = data.values || [];
 
-    if (!values.length) {
-        return '<div class="chart-error">没有数据</div>';
-    }
-
+    // 组装 series
     const series = data.series && data.series.length
         ? data.series
-        : [{ label: options.legend || '', values: values, color: options.color || null }];
+        : (values.length
+            ? [{ label: options.legend || '', values: values, color: options.color || null }]
+            : []);
+
+    // 检查有没有数据
+    const hasData = series.some(function (s) {
+        return s.values && s.values.length > 0;
+    });
+
+    if (!hasData) {
+        return '<div class="chart-error">没有数据</div>';
+    }
 
     // 求最大值
     let maxVal = 0;
@@ -134,6 +142,9 @@ export function renderBar(data, options) {
     parts.push('</svg>');
 
     const chartId = 'chart-' + Math.random().toString(36).slice(2, 8);
-    return '<div class="mk-chart" data-chart-id="' + chartId + '">' +
+    const customWidth = options.width
+        ? ' style="max-width:' + options.width + 'px"'
+        : '';
+    return '<div class="mk-chart" data-chart-id="' + chartId + '"' + customWidth + '>' +
         parts.join('') + '</div>';
 }
