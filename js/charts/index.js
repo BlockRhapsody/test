@@ -18,7 +18,7 @@ import { parseCSV, parseNumberList } from './utils.js';
 /* ---------- 渲染器路由 ---------- */
 const RENDERERS = {
     bar: renderBar,
-    line: renderLine,
+    line: renderLine
     // pie / histogram / boxplot 后续加
 };
 
