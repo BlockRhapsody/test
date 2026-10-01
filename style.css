@@ -1,6 +1,6 @@
 /* ============================================================
    MetaKnow · 样式表
-   版本：V1.3
+   版本：V1.4
    ============================================================ */
 
 /* ---------- 1. 设计令牌 ---------- */
@@ -2155,3 +2155,26 @@ a.mk-card:hover {
     transform: translateY(0);
 }
 
+/* 折线图 */
+.mk-chart .line-path {
+    fill: none;
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.mk-chart .line-point {
+    fill: var(--bg-primary);
+    stroke-width: 2;
+    cursor: pointer;
+    transition: r 0.15s ease;
+}
+
+.mk-chart .line-point:hover {
+    r: 6;
+}
+
+.mk-chart .legend-line {
+    stroke-width: 2.5;
+    stroke-linecap: round;
+}
