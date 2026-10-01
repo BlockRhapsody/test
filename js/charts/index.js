@@ -12,13 +12,15 @@
 // ============================================================
 
 import { renderBar } from './bar.js';
+import { renderLine } from './line.js';
 import { bindTooltipEvents } from './tooltip.js';
 import { parseCSV, parseNumberList } from './utils.js';
 
 /* ---------- 渲染器路由 ---------- */
 const RENDERERS = {
     bar: renderBar
-    // line / pie / histogram / boxplot 后续加
+    line: renderLine,
+    // pie / histogram / boxplot 后续加
 };
 
 /* ---------- 保留字 ---------- */
@@ -57,12 +59,17 @@ function parseChartConfig(codeEl) {
         const keyLower = key.toLowerCase();
 
         if (!isReserved(key)) {
-            // 非保留字 → 作为一个 series
-            data.series.push({
-                label: key,
-                values: parseNumberList(val),
-                color: null
-            });
+            // 值里含逗号或数字 → 当作 series
+            if (val.indexOf(',') !== -1 || /^-?\d/.test(val)) {
+                data.series.push({
+                    label: key,
+                    values: parseNumberList(val),
+                    color: null
+                });
+            } else {
+                // 否则当作普通选项（smooth / area / dot 等）
+                options[key] = val;
+            }
             continue;
         }
 
